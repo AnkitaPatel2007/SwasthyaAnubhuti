@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar.tsx';
 import { Dashboard } from './components/Dashboard.tsx';
 import { ReportsVault } from './components/ReportsVault.tsx';
+import { DiseaseExplorer } from './components/DiseaseExplorer.tsx';
 import { TrendsVisualizer } from './components/TrendsVisualizer.tsx';
-import { CoachPlanner } from './components/CoachPlanner.tsx';
-import { HealthLibrary } from './components/HealthLibrary.tsx';
+import { DailyHabitsTracker } from './components/DailyHabitsTracker.tsx';
 import { AssistantChat } from './components/AssistantChat.tsx';
 import { DailyCheckinModal } from './components/DailyCheckinModal.tsx';
 import { PrivacyModal } from './components/PrivacyModal.tsx';
@@ -12,65 +12,64 @@ import { AuthModal } from './components/AuthModal.tsx';
 import { apiClient } from './services/api.ts';
 import {
   UserProfile,
-  DailySymptomLog,
+  DailyHealthUpdate,
   MedicalReport,
+  HabitGoal,
   HabitReminder,
-  DailyWellnessPlan,
   ChatMessage,
-  HealthStory
+  DiseaseCondition
 } from './types/index.ts';
 import {
   SEED_PROFILE,
   SEED_REPORTS,
-  SEED_SYMPTOM_LOGS,
-  SEED_REMINDERS,
-  SEED_WELLNESS_PLAN
+  SEED_DAILY_UPDATES,
+  SEED_HABIT_GOALS,
+  SEED_REMINDERS
 } from './db/seedData.ts';
-import { HEALTH_STORIES } from './db/knowledgeBase.ts';
+import { DISEASES_CATALOG } from './db/diseasesData.ts';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
   const [privacyMask, setPrivacyMask] = useState<boolean>(false);
 
-  // Core Data States (initialized with realistic seed data for instant zero-flicker render)
+  // Core Data States (Pre-populated with realistic seed data for zero-latency initial load)
   const [profile, setProfile] = useState<UserProfile>(SEED_PROFILE);
   const [reports, setReports] = useState<MedicalReport[]>(SEED_REPORTS);
-  const [symptomLogs, setSymptomLogs] = useState<DailySymptomLog[]>(SEED_SYMPTOM_LOGS);
+  const [dailyUpdates, setDailyUpdates] = useState<DailyHealthUpdate[]>(SEED_DAILY_UPDATES);
+  const [habitGoals, setHabitGoals] = useState<HabitGoal[]>(SEED_HABIT_GOALS);
   const [reminders, setReminders] = useState<HabitReminder[]>(SEED_REMINDERS);
-  const [wellnessPlan, setWellnessPlan] = useState<DailyWellnessPlan>(SEED_WELLNESS_PLAN);
-  const [stories, setStories] = useState<HealthStory[]>(HEALTH_STORIES);
+  const [diseases, setDiseases] = useState<DiseaseCondition[]>(DISEASES_CATALOG);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   // Navigation payload states
   const [selectedBiomarkerTrend, setSelectedBiomarkerTrend] = useState<string | undefined>(undefined);
-  const [selectedStoryId, setSelectedStoryId] = useState<string | undefined>(undefined);
 
   // Modals
   const [isCheckinOpen, setIsCheckinOpen] = useState<boolean>(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState<boolean>(false);
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
 
-  // Fetch initial data from server on mount
+  // Fetch data on mount
   useEffect(() => {
     async function loadData() {
       try {
-        const [profData, repsData, sympData, remsData, planData, storsData, msgsData] =
+        const [profData, repsData, updsData, goalsData, remsData, disData, msgsData] =
           await Promise.allSettled([
             apiClient.getProfile(),
             apiClient.getReports(),
-            apiClient.getSymptoms(),
+            apiClient.getDailyUpdates(),
+            apiClient.getHabitGoals(),
             apiClient.getReminders(),
-            apiClient.getWellnessPlan(),
-            apiClient.getStories(),
+            apiClient.getDiseases(),
             apiClient.getChatHistory(),
           ]);
 
         if (profData.status === 'fulfilled') setProfile(profData.value);
         if (repsData.status === 'fulfilled') setReports(repsData.value);
-        if (sympData.status === 'fulfilled') setSymptomLogs(sympData.value);
+        if (updsData.status === 'fulfilled') setDailyUpdates(updsData.value);
+        if (goalsData.status === 'fulfilled') setHabitGoals(goalsData.value);
         if (remsData.status === 'fulfilled') setReminders(remsData.value);
-        if (planData.status === 'fulfilled') setWellnessPlan(planData.value);
-        if (storsData.status === 'fulfilled') setStories(storsData.value);
+        if (disData.status === 'fulfilled') setDiseases(disData.value);
         if (msgsData.status === 'fulfilled') setChatMessages(msgsData.value);
       } catch (err) {
         console.warn('Initial server sync caught fallback:', err);
@@ -79,14 +78,14 @@ export default function App() {
     loadData();
   }, []);
 
-  const todayLog = symptomLogs[0] || null;
+  const latestUpdate = dailyUpdates[0] || null;
 
   // --- Handlers ---
-  const handleSaveSymptomLog = async (logData: Partial<DailySymptomLog>) => {
+  const handleSaveHealthUpdate = async (data: Partial<DailyHealthUpdate>) => {
     try {
-      const saved = await apiClient.logSymptom(logData);
-      setSymptomLogs((prev) => {
-        const existingIdx = prev.findIndex((l) => l.date === saved.date);
+      const saved = await apiClient.logDailyHealth(data);
+      setDailyUpdates((prev) => {
+        const existingIdx = prev.findIndex((u) => u.date === saved.date);
         if (existingIdx >= 0) {
           const updated = [...prev];
           updated[existingIdx] = saved;
@@ -94,15 +93,18 @@ export default function App() {
         }
         return [saved, ...prev];
       });
+
+      // Refresh goals sync
+      const freshGoals = await apiClient.getHabitGoals();
+      setHabitGoals(freshGoals);
     } catch (err) {
-      console.error('Failed to log symptom:', err);
+      console.error('Failed to log health update:', err);
     }
   };
 
   const handleQuickAddWater = async () => {
-    const currentGlasses = todayLog?.waterGlasses ?? 5;
-    const nextGlasses = currentGlasses + 1;
-    await handleSaveSymptomLog({ waterGlasses: nextGlasses });
+    const currentGlasses = latestUpdate?.waterGlasses ?? 6;
+    await handleSaveHealthUpdate({ waterGlasses: currentGlasses + 1 });
   };
 
   const handleToggleReminder = async (remId: string) => {
@@ -110,25 +112,20 @@ export default function App() {
       const updatedList = await apiClient.toggleReminder(remId);
       setReminders(updatedList);
     } catch (err) {
-      // optimistic fallback
       setReminders((prev) =>
         prev.map((r) => (r.id === remId ? { ...r, enabled: !r.enabled } : r))
       );
     }
   };
 
-  const handleToggleRoutineItem = async (routineId: string) => {
-    try {
-      const updatedPlan = await apiClient.toggleRoutineItem(routineId);
-      setWellnessPlan(updatedPlan);
-    } catch (err) {
-      setWellnessPlan((prev) => ({
-        ...prev,
-        routines: prev.routines.map((r) =>
-          r.id === routineId ? { ...r, completed: !r.completed } : r
-        ),
-      }));
-    }
+  const handleAddReminder = async (rem: Omit<HabitReminder, 'id' | 'userId'>) => {
+    const created = await apiClient.addReminder(rem);
+    setReminders((prev) => [...prev, created]);
+  };
+
+  const handleDeleteReminder = async (remId: string) => {
+    const updated = await apiClient.deleteReminder(remId);
+    setReminders(updated);
   };
 
   const handleUploadReport = async (payload: {
@@ -144,13 +141,6 @@ export default function App() {
   const handleDeleteReport = async (reportId: string) => {
     await apiClient.deleteReport(reportId);
     setReports((prev) => prev.filter((r) => r.id !== reportId));
-  };
-
-  const handleToggleTrackingMode = async (
-    newMode: 'cycle_and_wellness' | 'energy_and_circadian'
-  ) => {
-    const updated = await apiClient.updateProfile({ trackingMode: newMode });
-    setProfile(updated);
   };
 
   const handleSendMessage = async (text: string) => {
@@ -176,7 +166,7 @@ export default function App() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `AuraHealth_Records_${profile.id}_${Date.now()}.json`;
+    a.download = `AuraHealth_MedicalFile_${profile.id}_${Date.now()}.json`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -186,7 +176,7 @@ export default function App() {
     apiClient.clearToken();
     setProfile(SEED_PROFILE);
     setReports([]);
-    setSymptomLogs([]);
+    setDailyUpdates([]);
     setChatMessages([]);
     setCurrentTab('dashboard');
   };
@@ -194,21 +184,23 @@ export default function App() {
   const handleLogin = async (email: string, pass: string) => {
     const res = await apiClient.login(email, pass);
     setProfile(res.profile);
-    const [reps, symps, rems] = await Promise.all([
+    const [reps, upds, rems, goals] = await Promise.all([
       apiClient.getReports(),
-      apiClient.getSymptoms(),
+      apiClient.getDailyUpdates(),
       apiClient.getReminders(),
+      apiClient.getHabitGoals(),
     ]);
     setReports(reps);
-    setSymptomLogs(symps);
+    setDailyUpdates(upds);
     setReminders(rems);
+    setHabitGoals(goals);
   };
 
   const handleRegister = async (email: string, pass: string, name: string) => {
     const res = await apiClient.register(email, pass, name);
     setProfile(res.profile);
     setReports([]);
-    setSymptomLogs([]);
+    setDailyUpdates([]);
   };
 
   const handleLogout = () => {
@@ -220,13 +212,14 @@ export default function App() {
     apiClient.clearToken();
     setProfile(SEED_PROFILE);
     setReports(SEED_REPORTS);
-    setSymptomLogs(SEED_SYMPTOM_LOGS);
+    setDailyUpdates(SEED_DAILY_UPDATES);
     setReminders(SEED_REMINDERS);
+    setHabitGoals(SEED_HABIT_GOALS);
   };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-rose-100 selection:text-rose-900">
-      {/* 3-Zone Top Navigation */}
+      {/* 3-Zone Navigation Header */}
       <Navbar
         currentTab={currentTab}
         onSelectTab={(tab) => {
@@ -250,26 +243,24 @@ export default function App() {
         {currentTab === 'dashboard' && (
           <Dashboard
             profile={profile}
-            todayLog={todayLog}
+            latestUpdate={latestUpdate}
             reports={reports}
+            habitGoals={habitGoals}
             reminders={reminders}
-            wellnessPlan={wellnessPlan}
-            stories={stories}
+            diseases={diseases}
             onOpenCheckin={() => setIsCheckinOpen(true)}
             onOpenReports={() => setCurrentTab('reports')}
             onOpenTrends={(param) => {
               if (param) setSelectedBiomarkerTrend(param);
               setCurrentTab('trends');
             }}
-            onOpenStories={(storyId) => {
-              if (storyId) setSelectedStoryId(storyId);
-              setCurrentTab('stories');
+            onOpenDiseases={(diseaseId) => {
+              setCurrentTab('diseases');
             }}
-            onToggleReminder={handleToggleReminder}
-            onQuickAddWater={handleQuickAddWater}
-            onToggleRoutineItem={handleToggleRoutineItem}
-            onToggleTrackingMode={handleToggleTrackingMode}
+            onOpenHabits={() => setCurrentTab('habits')}
             onOpenChat={() => setCurrentTab('chat')}
+            onQuickAddWater={handleQuickAddWater}
+            onToggleReminder={handleToggleReminder}
           />
         )}
 
@@ -285,28 +276,37 @@ export default function App() {
           />
         )}
 
+        {currentTab === 'diseases' && (
+          <DiseaseExplorer
+            diseases={diseases}
+            onSelectBiomarkerForTrend={(param) => {
+              setSelectedBiomarkerTrend(param);
+              setCurrentTab('trends');
+            }}
+            onOpenReportUpload={() => setCurrentTab('reports')}
+          />
+        )}
+
         {currentTab === 'trends' && (
           <TrendsVisualizer
             reports={reports}
             initialParam={selectedBiomarkerTrend}
-            onOpenReport={(repId) => {
+            onOpenReport={(_repId) => {
               setCurrentTab('reports');
             }}
           />
         )}
 
-        {currentTab === 'coach' && (
-          <CoachPlanner
-            plan={wellnessPlan}
-            onToggleRoutine={handleToggleRoutineItem}
-            onRegeneratePlan={() => {}}
-          />
-        )}
-
-        {currentTab === 'stories' && (
-          <HealthLibrary
-            stories={stories}
-            initialStoryId={selectedStoryId}
+        {currentTab === 'habits' && (
+          <DailyHabitsTracker
+            goals={habitGoals}
+            reminders={reminders}
+            latestUpdate={latestUpdate}
+            profile={profile}
+            onUpdateHealth={handleSaveHealthUpdate}
+            onToggleReminder={handleToggleReminder}
+            onAddReminder={handleAddReminder}
+            onDeleteReminder={handleDeleteReminder}
           />
         )}
 
@@ -325,22 +325,21 @@ export default function App() {
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-900">AuraHealth</span>
             <span>·</span>
-            <span>Preventive Youth Health & Wellness Assistant</span>
+            <span>Youth Health, Medical Reports & Preventive Habits Assistant</span>
           </div>
 
           <div className="text-center sm:text-right">
-            <span>Non-diagnostic educational tool. Not a substitute for medical advice.</span>
+            <span>Non-diagnostic preventive educational tool. Always consult a qualified physician for clinical care.</span>
           </div>
         </div>
       </footer>
 
-      {/* Flo-style Daily Check-in Modal */}
+      {/* Daily Health & Vitals Check-in Modal */}
       <DailyCheckinModal
         isOpen={isCheckinOpen}
         onClose={() => setIsCheckinOpen(false)}
-        existingLog={todayLog}
-        onSave={handleSaveSymptomLog}
-        isCycleTracking={profile.trackingMode === 'cycle_and_wellness'}
+        existingLog={latestUpdate}
+        onSave={handleSaveHealthUpdate}
       />
 
       {/* Confidentiality & Privacy Modal */}

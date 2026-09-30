@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import { dbStore } from './src/db/store.ts';
 import { parseMedicalDocumentWithGemini, generateChatResponseWithGemini } from './src/services/geminiService.ts';
-import { HEALTH_STORIES } from './src/db/knowledgeBase.ts';
+import { DISEASES_CATALOG } from './src/db/diseasesData.ts';
 
 dotenv.config();
 
@@ -18,7 +18,6 @@ const JWT_SECRET = process.env.JWT_SECRET || 'aurahealth-super-secret-key-2026';
 
 app.use(express.json({ limit: '25mb' }));
 
-// Auth token middleware
 interface AuthRequest extends Request {
   userId?: string;
 }
@@ -26,19 +25,17 @@ interface AuthRequest extends Request {
 function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
-    // Default to the active seeded user for frictionless demo experience if no header
-    req.userId = 'usr_maya_22';
+    req.userId = 'usr_alex_22';
     return next();
   }
 
   const token = authHeader.replace(/^Bearer\s+/, '');
   try {
     const decoded: any = jwt.verify(token, JWT_SECRET);
-    req.userId = decoded.userId || 'usr_maya_22';
+    req.userId = decoded.userId || 'usr_alex_22';
     next();
   } catch (err) {
-    // Fallback to active demo user
-    req.userId = 'usr_maya_22';
+    req.userId = 'usr_alex_22';
     next();
   }
 }
@@ -80,7 +77,7 @@ app.get('/api/auth/me', requireAuth, (req: AuthRequest, res: Response) => {
   return res.json({ profile });
 });
 
-// ----------------- PROFILE ENDPOINTS -----------------
+// ----------------- PROFILE & VITALS -----------------
 app.get('/api/profile', requireAuth, (req: AuthRequest, res: Response) => {
   const profile = dbStore.getProfile(req.userId!);
   return res.json(profile);
@@ -95,15 +92,26 @@ app.put('/api/profile', requireAuth, (req: AuthRequest, res: Response) => {
   }
 });
 
-// ----------------- SYMPTOMS & DAILY CHECK-IN -----------------
-app.get('/api/symptoms', requireAuth, (req: AuthRequest, res: Response) => {
-  const logs = dbStore.getSymptomLogs(req.userId!);
-  return res.json(logs);
+// ----------------- DAILY HEALTH UPDATES & VITALS -----------------
+app.get('/api/health/updates', requireAuth, (req: AuthRequest, res: Response) => {
+  const updates = dbStore.getDailyUpdates(req.userId!);
+  return res.json(updates);
 });
 
-app.post('/api/symptoms', requireAuth, (req: AuthRequest, res: Response) => {
-  const saved = dbStore.logSymptoms(req.userId!, req.body);
+app.post('/api/health/updates', requireAuth, (req: AuthRequest, res: Response) => {
+  const saved = dbStore.logDailyHealth(req.userId!, req.body);
   return res.json(saved);
+});
+
+// ----------------- DAILY HABITS & GOALS -----------------
+app.get('/api/habits/goals', requireAuth, (req: AuthRequest, res: Response) => {
+  const goals = dbStore.getHabitGoals(req.userId!);
+  return res.json(goals);
+});
+
+app.patch('/api/habits/goals/:id', requireAuth, (req: AuthRequest, res: Response) => {
+  const goals = dbStore.updateHabitGoal(req.userId!, req.params.id, req.body);
+  return res.json(goals);
 });
 
 // ----------------- MEDICAL REPORTS & OCR -----------------
@@ -127,7 +135,6 @@ app.post('/api/reports/upload', requireAuth, async (req: AuthRequest, res: Respo
       return res.status(400).json({ error: 'File name is required.' });
     }
 
-    // Call server-side Gemini 3.8 Flash OCR & extraction
     const extracted = await parseMedicalDocumentWithGemini(
       fileData || '',
       mimeType || 'application/pdf',
@@ -142,11 +149,15 @@ app.post('/api/reports/upload', requireAuth, async (req: AuthRequest, res: Respo
       reportType: extracted.reportType,
       reportDate: extracted.reportDate,
       fileName,
-      fileSize: fileData ? Math.round((fileData.length * 3) / 4) : 150000,
+      fileSize: fileData ? Math.round((fileData.length * 3) / 4) : 160000,
       status: 'completed' as const,
       summary: extracted.summary,
       parameters: extracted.parameters.map(p => ({ ...p, reportId })),
       doctorDiscussionPoints: extracted.doctorDiscussionPoints,
+      preventiveTakeaways: [
+        'Review out-of-range indicators with your healthcare provider.',
+        'Track longitudinal shifts on your Biomarker Trends page.'
+      ],
       createdAt: new Date().toISOString()
     };
 
@@ -170,19 +181,17 @@ app.get('/api/trends', requireAuth, (req: AuthRequest, res: Response) => {
   return res.json(history);
 });
 
-// ----------------- WELLNESS PLANS & ROUTINES -----------------
-app.get('/api/wellness/plan', requireAuth, (req: AuthRequest, res: Response) => {
-  const plan = dbStore.getWellnessPlan(req.userId!);
-  return res.json(plan);
+// ----------------- DISEASES CATALOG -----------------
+app.get('/api/diseases', (_req: Request, res: Response) => {
+  return res.json(DISEASES_CATALOG);
 });
 
-app.post('/api/wellness/plan/routine/toggle', requireAuth, (req: AuthRequest, res: Response) => {
-  const { routineId } = req.body;
-  if (!routineId) {
-    return res.status(400).json({ error: 'routineId is required.' });
+app.get('/api/diseases/:id', (req: Request, res: Response) => {
+  const disease = dbStore.getDiseaseById(req.params.id);
+  if (!disease) {
+    return res.status(404).json({ error: 'Disease condition not found.' });
   }
-  const updated = dbStore.toggleRoutineItem(req.userId!, routineId);
-  return res.json(updated);
+  return res.json(disease);
 });
 
 // ----------------- REMINDERS -----------------
@@ -206,20 +215,7 @@ app.delete('/api/reminders/:id', requireAuth, (req: AuthRequest, res: Response) 
   return res.json(list);
 });
 
-// ----------------- HEALTH STORIES & GUIDES -----------------
-app.get('/api/stories', (_req: Request, res: Response) => {
-  return res.json(HEALTH_STORIES);
-});
-
-app.get('/api/stories/:id', (req: Request, res: Response) => {
-  const story = HEALTH_STORIES.find(s => s.id === req.params.id);
-  if (!story) {
-    return res.status(404).json({ error: 'Story not found.' });
-  }
-  return res.json(story);
-});
-
-// ----------------- AI COMPANION CHAT -----------------
+// ----------------- AI HEALTH ASSISTANT -----------------
 app.get('/api/chat/history', requireAuth, (req: AuthRequest, res: Response) => {
   const messages = dbStore.getChatMessages(req.userId!);
   return res.json(messages);
@@ -235,9 +231,8 @@ app.post('/api/chat', requireAuth, async (req: AuthRequest, res: Response) => {
     const userId = req.userId!;
     const profile = dbStore.getProfile(userId);
     const reports = dbStore.getReports(userId);
-    const logs = dbStore.getSymptomLogs(userId);
+    const updates = dbStore.getDailyUpdates(userId);
 
-    // Save user message
     const userMsg = {
       id: `usr_${Date.now()}`,
       sender: 'user' as const,
@@ -246,27 +241,20 @@ app.post('/api/chat', requireAuth, async (req: AuthRequest, res: Response) => {
     };
     dbStore.addChatMessage(userId, userMsg);
 
-    // Build context summary for Gemini
-    const recentParams = reports.flatMap(r => r.parameters).slice(0, 5);
+    // Build context
+    const recentParams = reports.flatMap(r => r.parameters).slice(0, 6);
     const paramSummary = recentParams.map(p => `${p.parameterName}: ${p.value} ${p.unit} (${p.status})`).join(', ');
-    const latestLog = logs[0];
-    const logSummary = latestLog
-      ? `Sleep: ${latestLog.sleepHours}h, Mood: ${latestLog.mood}, Stress: ${latestLog.stressLevel}/5, Fatigue: ${latestLog.fatigueLevel}/5`
-      : 'No recent log';
-
-    let cycleStatus = 'Circadian energy focus';
-    if (profile?.trackingMode === 'cycle_and_wellness' && profile.lastPeriodStartDate) {
-      const daysDiff = Math.floor((Date.now() - new Date(profile.lastPeriodStartDate).getTime()) / (1000 * 60 * 60 * 24));
-      const cycleDay = (daysDiff % (profile.cycleLengthDays || 28)) + 1;
-      cycleStatus = `Cycle Day ${cycleDay} of ${profile.cycleLengthDays || 28} (Estrogen/Ovulation window)`;
-    }
+    const latestUpdate = updates[0];
+    const updateSummary = latestUpdate
+      ? `Resting BP: ${latestUpdate.bloodPressure || 'Normal'}, Sleep: ${latestUpdate.sleepHours}h, Water: ${latestUpdate.waterGlasses * 250}ml, Energy: ${latestUpdate.energyLevel}/5, Reported Symptoms: ${latestUpdate.symptomsReported?.join(', ') || 'None'}`
+      : 'Vitals stable';
 
     const aiResult = await generateChatResponseWithGemini(message, {
-      userName: profile?.name || 'Friend',
-      profileSummary: `${profile?.age || 21}yo ${profile?.gender || 'individual'}, lifestyle: ${profile?.lifestyle || 'student'}`,
+      userName: profile?.name || 'User',
+      profileSummary: `${profile?.age || 22}yo ${profile?.gender || 'individual'}, lifestyle: ${profile?.lifestyle || 'student'}, Conditions: ${profile?.existingConditions?.join(', ') || 'None stated'}`,
       recentBiomarkersSummary: paramSummary,
-      recentSymptomSummary: logSummary,
-      cycleOrRhythmStatus: cycleStatus
+      recentSymptomSummary: updateSummary,
+      cycleOrRhythmStatus: `Resting HR: ${profile?.restingHeartRate || 72} bpm, Blood Pressure: ${profile?.bloodPressureSystolic || 120}/${profile?.bloodPressureDiastolic || 80} mmHg`
     });
 
     const assistantMsg = {
@@ -295,13 +283,13 @@ app.delete('/api/chat/history', requireAuth, (req: AuthRequest, res: Response) =
 app.get('/api/privacy/export', requireAuth, (req: AuthRequest, res: Response) => {
   const exportPayload = dbStore.exportData(req.userId!);
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Content-Disposition', `attachment; filename=AuraHealth_UserData_${req.userId}_${Date.now()}.json`);
+  res.setHeader('Content-Disposition', `attachment; filename=AuraHealth_MedicalFile_${req.userId}_${Date.now()}.json`);
   return res.send(JSON.stringify(exportPayload, null, 2));
 });
 
 app.delete('/api/privacy/account', requireAuth, (req: AuthRequest, res: Response) => {
   dbStore.deleteAccount(req.userId!);
-  return res.json({ success: true, message: 'Your account and all associated health data have been permanently deleted.' });
+  return res.json({ success: true, message: 'Account and all medical records permanently deleted.' });
 });
 
 // ----------------- VITE INTEGRATION -----------------
@@ -321,7 +309,7 @@ async function startServer() {
   }
 
   app.listen(Number(PORT), '0.0.0.0', () => {
-    console.log(`AuraHealth backend & frontend server live at http://0.0.0.0:${PORT}`);
+    console.log(`AuraHealth Full-Stack server live on http://0.0.0.0:${PORT}`);
   });
 }
 

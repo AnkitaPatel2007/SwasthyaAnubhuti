@@ -1,6 +1,5 @@
 export type Gender = 'female' | 'male' | 'non-binary' | 'prefer-not-to-say';
 export type LifestyleType = 'student' | 'desk_professional' | 'active_athlete' | 'shift_worker' | 'general';
-export type TrackingMode = 'cycle_and_wellness' | 'energy_and_circadian' | 'holistic_general';
 
 export interface UserProfile {
   id: string;
@@ -11,53 +10,24 @@ export interface UserProfile {
   heightCm: number;
   weightKg: number;
   lifestyle: LifestyleType;
-  trackingMode: TrackingMode;
   targetSleepHours: number;
   targetWaterMl: number;
-  // Cycle tracking parameters (Flo-inspired)
-  cycleLengthDays?: number; // e.g., 28
-  periodLengthDays?: number; // e.g., 5
-  lastPeriodStartDate?: string; // YYYY-MM-DD
-  isTryingToConceive?: boolean;
-  pinCode?: string; // for confidential lock
+  targetActivityMins: number;
+  bloodPressureSystolic?: number;
+  bloodPressureDiastolic?: number;
+  restingHeartRate?: number;
+  bloodGroup?: string;
+  existingConditions?: string[];
+  familyHistory?: string[]; // e.g. ['Diabetes', 'Hypertension', 'Thyroid']
+  pinCode?: string;
   anonymousMode?: boolean;
-}
-
-export type CyclePhase = 'menstrual' | 'follicular' | 'ovulation' | 'luteal' | 'circadian_day' | 'circadian_night';
-
-export interface DailySymptomLog {
-  id: string;
-  userId: string;
-  date: string; // YYYY-MM-DD
-  // Physical symptoms
-  cramps?: 'none' | 'mild' | 'moderate' | 'severe';
-  headache?: boolean;
-  bloating?: boolean;
-  breastTenderness?: boolean;
-  fatigueLevel: number; // 1 to 5
-  skinCondition?: 'clear' | 'oily' | 'breakouts' | 'dry';
-  digestion?: 'normal' | 'constipated' | 'bloated' | 'acidic' | 'nausea';
-  // Mood and mental state
-  mood: 'peaceful' | 'energetic' | 'focused' | 'anxious' | 'irritable' | 'low' | 'stressed';
-  stressLevel: number; // 1 to 5
-  mentalFocus: number; // 1 to 5
-  // Habits and vitals
-  sleepHours: number;
-  sleepQuality: number; // 1 to 5
-  waterGlasses: number; // 250ml each
-  exerciseMinutes: number;
-  exerciseType?: string;
-  caffeineCups: number;
-  supplementsTaken: string[]; // e.g., ['Iron', 'Vitamin D', 'Omega-3', 'Magnesium', 'Multivitamin']
-  periodFlow?: 'none' | 'spotting' | 'light' | 'medium' | 'heavy';
-  notes?: string;
 }
 
 export interface HealthBiomarker {
   id: string;
   reportId: string;
   parameterName: string;
-  category: 'hematology' | 'vitamins_minerals' | 'endocrine' | 'lipids' | 'metabolic' | 'urinalysis';
+  category: 'hematology' | 'vitamins_minerals' | 'endocrine' | 'lipids' | 'metabolic' | 'liver' | 'kidney' | 'urinalysis';
   value: number;
   unit: string;
   referenceMin?: number;
@@ -65,15 +35,16 @@ export interface HealthBiomarker {
   status: 'optimal' | 'low' | 'high' | 'borderline';
   plainExplanation: string;
   youthRelevance: string;
+  associatedConditions?: string[]; // e.g. ['Iron Deficiency Anemia', 'Chronic Fatigue']
   reportDate: string;
-  confidenceScore: number; // 0 to 1
+  confidenceScore: number;
 }
 
 export interface MedicalReport {
   id: string;
   userId: string;
   title: string;
-  reportType: 'complete_blood_count' | 'lipid_profile' | 'vitamin_panel' | 'hormone_panel' | 'comprehensive_metabolic' | 'general';
+  reportType: 'complete_blood_count' | 'lipid_profile' | 'vitamin_panel' | 'hormone_panel' | 'comprehensive_metabolic' | 'liver_kidney_panel' | 'general';
   reportDate: string;
   fileName: string;
   fileSize: number;
@@ -81,47 +52,68 @@ export interface MedicalReport {
   summary: string;
   parameters: HealthBiomarker[];
   doctorDiscussionPoints: string[];
+  preventiveTakeaways: string[];
   extractedText?: string;
   createdAt: string;
 }
 
-export interface HealthStory {
+export interface DiseaseCondition {
   id: string;
-  title: string;
-  category: 'Cycle & Hormones' | 'Fatigue & Blood Health' | 'Sleep & Mind' | 'Skin & Gut' | 'Fitness & Food';
-  readTime: string;
-  summary: string;
-  evidenceSource: string;
-  contentMarkdown: string;
-  tags: string[];
-  highlightMetric?: string;
-}
-
-export interface RoutineItem {
-  id: string;
-  timeSlot: 'morning' | 'midday' | 'evening' | 'night';
-  title: string;
+  name: string;
+  category: 'Nutritional & Blood' | 'Metabolic & Cardiovascular' | 'Endocrine & Hormones' | 'Mental & Neurological' | 'Digestive & Gut' | 'Respiratory & Immunity';
+  prevalenceInYouth: string;
   description: string;
-  iconName: string;
-  completed: boolean;
+  commonSymptoms: string[];
+  keyLabTests: { testName: string; keyParameter: string; typicalAbnormality: string }[];
+  riskFactors: string[];
+  preventionLifestyle: string[];
+  warningSignsWhenToSeeDoctor: string[];
 }
 
-export interface DailyWellnessPlan {
+export interface DailyHealthUpdate {
   id: string;
   userId: string;
-  date: string;
-  focusTheme: string;
-  circadianAdvice: string;
-  routines: RoutineItem[];
-  biomarkerTip?: string;
+  date: string; // YYYY-MM-DD
+  // Vitals
+  restingHeartRate?: number;
+  bloodPressure?: string;
+  weightKg?: number;
+  energyLevel: number; // 1-5
+  stressLevel: number; // 1-5
+  mood: 'great' | 'productive' | 'normal' | 'fatigued' | 'stressed' | 'anxious';
+  // Habits
+  waterGlasses: number; // 250ml each
+  sleepHours: number;
+  sleepQuality: number; // 1-5
+  activityMinutes: number;
+  activityType?: string;
+  screenTimeHours: number;
+  nutritionQuality: 'healthy_balanced' | 'moderate' | 'junk_fast_food' | 'skipped_meals';
+  supplementsTaken: string[];
+  // Symptoms reported today
+  symptomsReported: string[]; // e.g. ['Headache', 'Acid Reflux', 'Brain Fog', 'Eye Strain', 'Muscle Ache']
+  notes?: string;
+}
+
+export interface HabitGoal {
+  id: string;
+  userId: string;
+  title: string;
+  category: 'water' | 'sleep' | 'activity' | 'nutrition' | 'screen_time' | 'medication';
+  targetValue: number;
+  currentValue: number;
+  unit: string;
+  currentStreakDays: number;
+  bestStreakDays: number;
+  completedToday: boolean;
 }
 
 export interface HabitReminder {
   id: string;
   userId: string;
   title: string;
-  category: 'water' | 'supplement' | 'movement' | 'sleep' | 'period' | 'report';
-  time: string; // "09:00"
+  category: 'water' | 'medication' | 'movement' | 'sleep' | 'eye_break' | 'report_followup';
+  time: string;
   enabled: boolean;
   frequency: 'daily' | 'weekdays' | 'hourly';
 }

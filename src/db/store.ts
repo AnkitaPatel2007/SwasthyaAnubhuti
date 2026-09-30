@@ -1,20 +1,22 @@
 import bcrypt from 'bcryptjs';
 import {
   UserProfile,
-  DailySymptomLog,
+  DailyHealthUpdate,
   MedicalReport,
   HealthBiomarker,
+  HabitGoal,
   HabitReminder,
-  DailyWellnessPlan,
-  ChatMessage
+  ChatMessage,
+  DiseaseCondition
 } from '../types/index.ts';
 import {
   SEED_PROFILE,
   SEED_REPORTS,
-  SEED_SYMPTOM_LOGS,
-  SEED_REMINDERS,
-  SEED_WELLNESS_PLAN
+  SEED_DAILY_UPDATES,
+  SEED_HABIT_GOALS,
+  SEED_REMINDERS
 } from './seedData.ts';
+import { DISEASES_CATALOG } from './diseasesData.ts';
 
 interface StoredUser {
   id: string;
@@ -27,9 +29,9 @@ class HealthDataStore {
   private users: Map<string, StoredUser> = new Map();
   private profiles: Map<string, UserProfile> = new Map();
   private reports: Map<string, MedicalReport[]> = new Map();
-  private symptomLogs: Map<string, DailySymptomLog[]> = new Map();
+  private dailyUpdates: Map<string, DailyHealthUpdate[]> = new Map();
+  private habitGoals: Map<string, HabitGoal[]> = new Map();
   private reminders: Map<string, HabitReminder[]> = new Map();
-  private wellnessPlans: Map<string, DailyWellnessPlan> = new Map();
   private chatMessages: Map<string, ChatMessage[]> = new Map();
 
   constructor() {
@@ -37,9 +39,8 @@ class HealthDataStore {
   }
 
   private seedDefaultData() {
-    // Default demo user: maya.student@aurahealth.internal / password123
-    const defaultSalt = bcrypt.genSaltSync(10);
-    const demoPasswordHash = bcrypt.hashSync('password123', defaultSalt);
+    const salt = bcrypt.genSaltSync(10);
+    const demoPasswordHash = bcrypt.hashSync('password123', salt);
 
     const demoUser: StoredUser = {
       id: SEED_PROFILE.id,
@@ -51,24 +52,32 @@ class HealthDataStore {
     this.users.set(demoUser.id, demoUser);
     this.profiles.set(demoUser.id, { ...SEED_PROFILE });
     this.reports.set(demoUser.id, JSON.parse(JSON.stringify(SEED_REPORTS)));
-    this.symptomLogs.set(demoUser.id, JSON.parse(JSON.stringify(SEED_SYMPTOM_LOGS)));
+    this.dailyUpdates.set(demoUser.id, JSON.parse(JSON.stringify(SEED_DAILY_UPDATES)));
+    this.habitGoals.set(demoUser.id, JSON.parse(JSON.stringify(SEED_HABIT_GOALS)));
     this.reminders.set(demoUser.id, JSON.parse(JSON.stringify(SEED_REMINDERS)));
-    this.wellnessPlans.set(demoUser.id, JSON.parse(JSON.stringify(SEED_WELLNESS_PLAN)));
     this.chatMessages.set(demoUser.id, [
       {
         id: 'msg_welcome',
         sender: 'assistant',
-        content: `Hello Maya! I'm your AuraHealth companion. I noticed you're on **Cycle Day 14** today (estrogen peak window) and your recent lab showed **Ferritin at 18 ng/mL**. How is your energy holding up today? Feel free to ask about your lab tests, cycle phases, or daily habits.`,
+        content: `Hello Alex! I am your AuraHealth Medical & Wellness Assistant. I've analyzed your latest Complete Blood Count (CBC) and Vitamin Panel. 
+
+Key Health Status:
+• **Ferritin:** 18 ng/mL (depleted iron reserves; explains your afternoon study fatigue)
+• **Vitamin D:** 24.2 ng/mL (sub-optimal indoor baseline)
+• **Resting Vitals:** BP 118/76 mmHg, Resting HR 71 bpm (healthy cardiovascular baseline)
+• **Habit Streaks:** 5-day hydration streak active!
+
+How can I assist your health goals today? You can ask about disease prevention, understanding your lab values, or building consistent daily habits.`,
         timestamp: new Date().toISOString(),
         citations: [
-          { source: 'Quest Diagnostics Report (Sept 2026)', referenceText: 'Serum Ferritin: 18 ng/mL (Reference: 20-150)' },
-          { source: 'ACOG Cycle Guide', referenceText: 'Estrogen peak in late follicular/ovulation window enhances verbal fluency & physical stamina.' }
+          { source: 'Quest Diagnostics Screening (Sep 2026)', referenceText: 'Serum Ferritin 18 ng/mL; 25-OH Vitamin D 24.2 ng/mL' },
+          { source: 'AuraHealth Vitals Log', referenceText: 'Resting Blood Pressure 118/76 mmHg' }
         ]
       }
     ]);
   }
 
-  // --- Auth & User ---
+  // --- Auth & Profile ---
   public async register(email: string, passwordPlain: string, name: string): Promise<{ user: StoredUser; profile: UserProfile }> {
     const existing = Array.from(this.users.values()).find(u => u.email.toLowerCase() === email.toLowerCase());
     if (existing) {
@@ -91,30 +100,33 @@ class HealthDataStore {
       email: email.toLowerCase(),
       name,
       age: 22,
-      gender: 'female',
-      heightCm: 165,
-      weightKg: 60,
+      gender: 'prefer-not-to-say',
+      heightCm: 170,
+      weightKg: 65,
       lifestyle: 'student',
-      trackingMode: 'cycle_and_wellness',
-      targetSleepHours: 8,
+      targetSleepHours: 8.0,
       targetWaterMl: 2500,
-      cycleLengthDays: 28,
-      periodLengthDays: 5,
-      lastPeriodStartDate: new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0],
+      targetActivityMins: 30,
+      bloodPressureSystolic: 120,
+      bloodPressureDiastolic: 80,
+      restingHeartRate: 72,
+      bloodGroup: 'O+',
+      existingConditions: [],
+      familyHistory: [],
       anonymousMode: false
     };
 
     this.users.set(userId, newUser);
     this.profiles.set(userId, newProfile);
     this.reports.set(userId, []);
-    this.symptomLogs.set(userId, []);
+    this.dailyUpdates.set(userId, []);
+    this.habitGoals.set(userId, JSON.parse(JSON.stringify(SEED_HABIT_GOALS.map(g => ({ ...g, userId, id: `goal_${Date.now()}_${Math.random().toString(36).substring(2, 6)}` })))));
     this.reminders.set(userId, JSON.parse(JSON.stringify(SEED_REMINDERS.map(r => ({ ...r, userId, id: `rem_${Date.now()}_${Math.random().toString(36).substring(2, 6)}` })))));
-    this.wellnessPlans.set(userId, { ...SEED_WELLNESS_PLAN, id: `plan_${Date.now()}`, userId });
     this.chatMessages.set(userId, [
       {
         id: `msg_init_${Date.now()}`,
         sender: 'assistant',
-        content: `Welcome to AuraHealth, ${name}! Your private health sanctuary is ready. You can log your daily feelings, upload any medical reports for simple explanations, and track your cycle or energy rhythm.`,
+        content: `Welcome to AuraHealth, ${name}! Your health profile is initialized. You can upload medical lab reports for instant parameter extraction, track your daily vitals and habits, and check disease risk factors.`,
         timestamp: new Date().toISOString()
       }
     ]);
@@ -139,19 +151,15 @@ class HealthDataStore {
       name: 'User',
       age: 22,
       gender: 'prefer-not-to-say',
-      heightCm: 168,
+      heightCm: 170,
       weightKg: 65,
-      lifestyle: 'general',
-      trackingMode: 'cycle_and_wellness',
-      targetSleepHours: 8,
-      targetWaterMl: 2500
+      lifestyle: 'student',
+      targetSleepHours: 8.0,
+      targetWaterMl: 2500,
+      targetActivityMins: 30
     };
 
     return { user, profile };
-  }
-
-  public getUserById(userId: string): StoredUser | undefined {
-    return this.users.get(userId);
   }
 
   public getProfile(userId: string): UserProfile | undefined {
@@ -197,14 +205,14 @@ class HealthDataStore {
     return true;
   }
 
-  public getBiomarkerHistory(userId: string, parameterNameQuery?: string): { parameterName: string; category: string; records: { date: string; value: number; unit: string; status: string; refMin?: number; refMax?: number; reportTitle: string }[] }[] {
+  public getBiomarkerHistory(userId: string, parameterQuery?: string): { parameterName: string; category: string; records: { date: string; value: number; unit: string; status: string; refMin?: number; refMax?: number; reportTitle: string }[] }[] {
     const userReports = this.getReports(userId);
-    const paramMap: Map<string, { parameterName: string; category: string; records: { date: string; value: number; unit: string; status: string; refMin?: number; refMax?: number; reportTitle: string }[] }> = new Map();
+    const paramMap = new Map<string, { parameterName: string; category: string; records: any[] }>();
 
     for (const report of userReports) {
       for (const p of report.parameters) {
-        const key = p.parameterName.trim().toLowerCase();
-        if (parameterNameQuery && !key.includes(parameterNameQuery.toLowerCase())) {
+        const key = p.parameterName.trim();
+        if (parameterQuery && !key.toLowerCase().includes(parameterQuery.toLowerCase())) {
           continue;
         }
 
@@ -228,7 +236,6 @@ class HealthDataStore {
       }
     }
 
-    // Sort each biomarker's records chronologically
     for (const item of paramMap.values()) {
       item.records.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }
@@ -236,40 +243,37 @@ class HealthDataStore {
     return Array.from(paramMap.values());
   }
 
-  // --- Daily Symptom Logs ---
-  public getSymptomLogs(userId: string): DailySymptomLog[] {
-    const logs = this.symptomLogs.get(userId) || [];
+  // --- Daily Health Updates & Vitals ---
+  public getDailyUpdates(userId: string): DailyHealthUpdate[] {
+    const logs = this.dailyUpdates.get(userId) || [];
     return logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
-  public logSymptoms(userId: string, logData: Partial<DailySymptomLog>): DailySymptomLog {
-    const userLogs = this.getSymptomLogs(userId);
-    const todayStr = logData.date || new Date().toISOString().split('T')[0];
+  public logDailyHealth(userId: string, updateData: Partial<DailyHealthUpdate>): DailyHealthUpdate {
+    const userLogs = this.getDailyUpdates(userId);
+    const todayStr = updateData.date || new Date().toISOString().split('T')[0];
     const existingIndex = userLogs.findIndex(l => l.date === todayStr);
 
-    const fullLog: DailySymptomLog = {
+    const fullLog: DailyHealthUpdate = {
       id: existingIndex >= 0 ? userLogs[existingIndex].id : `log_${Date.now()}`,
       userId,
       date: todayStr,
-      fatigueLevel: logData.fatigueLevel ?? 2,
-      mood: logData.mood ?? 'peaceful',
-      stressLevel: logData.stressLevel ?? 2,
-      mentalFocus: logData.mentalFocus ?? 3,
-      sleepHours: logData.sleepHours ?? 7.5,
-      sleepQuality: logData.sleepQuality ?? 4,
-      waterGlasses: logData.waterGlasses ?? 6,
-      exerciseMinutes: logData.exerciseMinutes ?? 30,
-      caffeineCups: logData.caffeineCups ?? 1,
-      supplementsTaken: logData.supplementsTaken ?? [],
-      cramps: logData.cramps ?? 'none',
-      headache: logData.headache ?? false,
-      bloating: logData.bloating ?? false,
-      breastTenderness: logData.breastTenderness ?? false,
-      skinCondition: logData.skinCondition ?? 'clear',
-      digestion: logData.digestion ?? 'normal',
-      periodFlow: logData.periodFlow ?? 'none',
-      exerciseType: logData.exerciseType,
-      notes: logData.notes
+      restingHeartRate: updateData.restingHeartRate ?? 72,
+      bloodPressure: updateData.bloodPressure ?? '118/76',
+      weightKg: updateData.weightKg ?? 62.0,
+      energyLevel: updateData.energyLevel ?? 3,
+      stressLevel: updateData.stressLevel ?? 2,
+      mood: updateData.mood ?? 'productive',
+      waterGlasses: updateData.waterGlasses ?? 6,
+      sleepHours: updateData.sleepHours ?? 7.5,
+      sleepQuality: updateData.sleepQuality ?? 4,
+      activityMinutes: updateData.activityMinutes ?? 30,
+      activityType: updateData.activityType ?? 'Brisk walking',
+      screenTimeHours: updateData.screenTimeHours ?? 5.5,
+      nutritionQuality: updateData.nutritionQuality ?? 'healthy_balanced',
+      supplementsTaken: updateData.supplementsTaken ?? [],
+      symptomsReported: updateData.symptomsReported ?? [],
+      notes: updateData.notes
     };
 
     if (existingIndex >= 0) {
@@ -278,38 +282,50 @@ class HealthDataStore {
       userLogs.unshift(fullLog);
     }
 
-    this.symptomLogs.set(userId, userLogs);
+    this.dailyUpdates.set(userId, userLogs);
+
+    // Sync corresponding habit goal values
+    this.syncHabitGoalsFromDailyUpdate(userId, fullLog);
+
     return fullLog;
   }
 
-  // --- Wellness Plan ---
-  public getWellnessPlan(userId: string): DailyWellnessPlan {
-    let plan = this.wellnessPlans.get(userId);
-    if (!plan) {
-      plan = {
-        ...SEED_WELLNESS_PLAN,
-        id: `plan_${Date.now()}`,
-        userId,
-        date: new Date().toISOString().split('T')[0]
-      };
-      this.wellnessPlans.set(userId, plan);
-    }
-    return plan;
+  // --- Daily Habit Goals & Streaks ---
+  public getHabitGoals(userId: string): HabitGoal[] {
+    return this.habitGoals.get(userId) || [];
   }
 
-  public saveWellnessPlan(userId: string, plan: DailyWellnessPlan): DailyWellnessPlan {
-    this.wellnessPlans.set(userId, plan);
-    return plan;
+  public updateHabitGoal(userId: string, goalId: string, updates: Partial<HabitGoal>): HabitGoal[] {
+    const goals = this.getHabitGoals(userId);
+    const goal = goals.find(g => g.id === goalId);
+    if (goal) {
+      Object.assign(goal, updates);
+    }
+    this.habitGoals.set(userId, goals);
+    return goals;
   }
 
-  public toggleRoutineItem(userId: string, routineId: string): DailyWellnessPlan {
-    const plan = this.getWellnessPlan(userId);
-    const item = plan.routines.find(r => r.id === routineId);
-    if (item) {
-      item.completed = !item.completed;
+  private syncHabitGoalsFromDailyUpdate(userId: string, update: DailyHealthUpdate) {
+    const goals = this.getHabitGoals(userId);
+    for (const g of goals) {
+      if (g.category === 'water') {
+        g.currentValue = update.waterGlasses;
+        g.completedToday = g.currentValue >= g.targetValue;
+      } else if (g.category === 'sleep') {
+        g.currentValue = update.sleepHours;
+        g.completedToday = g.currentValue >= g.targetValue;
+      } else if (g.category === 'activity') {
+        g.currentValue = update.activityMinutes;
+        g.completedToday = g.currentValue >= g.targetValue;
+      } else if (g.category === 'screen_time') {
+        g.currentValue = update.screenTimeHours;
+        g.completedToday = g.currentValue <= g.targetValue;
+      } else if (g.category === 'medication') {
+        g.currentValue = update.supplementsTaken.length;
+        g.completedToday = g.currentValue >= g.targetValue;
+      }
     }
-    this.wellnessPlans.set(userId, plan);
-    return plan;
+    this.habitGoals.set(userId, goals);
   }
 
   // --- Reminders ---
@@ -346,6 +362,15 @@ class HealthDataStore {
     return filtered;
   }
 
+  // --- Disease Catalog ---
+  public getDiseases(): DiseaseCondition[] {
+    return DISEASES_CATALOG;
+  }
+
+  public getDiseaseById(id: string): DiseaseCondition | undefined {
+    return DISEASES_CATALOG.find(d => d.id === id);
+  }
+
   // --- Chat ---
   public getChatMessages(userId: string): ChatMessage[] {
     return this.chatMessages.get(userId) || [];
@@ -362,16 +387,16 @@ class HealthDataStore {
     this.chatMessages.set(userId, []);
   }
 
-  // --- Data Privacy & Export ---
+  // --- Privacy & Export ---
   public exportData(userId: string): object {
     return {
       exportedAt: new Date().toISOString(),
       userProfile: this.getProfile(userId),
       medicalReports: this.getReports(userId),
-      dailySymptomLogs: this.getSymptomLogs(userId),
+      dailyHealthUpdates: this.getDailyUpdates(userId),
+      habitGoals: this.getHabitGoals(userId),
       reminders: this.getReminders(userId),
-      wellnessPlan: this.getWellnessPlan(userId),
-      complianceStatement: 'AuraHealth processes your data under strict user isolation and does not sell or share personal health telemetry.'
+      privacyCommitment: 'AuraHealth adheres to strict tenant isolation and never monetizes youth health data.'
     };
   }
 
@@ -379,9 +404,9 @@ class HealthDataStore {
     this.users.delete(userId);
     this.profiles.delete(userId);
     this.reports.delete(userId);
-    this.symptomLogs.delete(userId);
+    this.dailyUpdates.delete(userId);
+    this.habitGoals.delete(userId);
     this.reminders.delete(userId);
-    this.wellnessPlans.delete(userId);
     this.chatMessages.delete(userId);
     return true;
   }

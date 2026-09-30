@@ -96,8 +96,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
             </div>
 
-            <div className="p-3 bg-rose-50/50 rounded-xl border border-rose-100 text-xs text-rose-950">
-              Mode: <strong>{currentUser.trackingMode.replace(/_/g, ' ')}</strong>
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800">
+              Blood Group: <strong>{currentUser.bloodGroup || 'O+'}</strong> · Resting BP: <strong>{currentUser.bloodPressureSystolic || 118}/{currentUser.bloodPressureDiastolic || 76} mmHg</strong>
             </div>
 
             <button

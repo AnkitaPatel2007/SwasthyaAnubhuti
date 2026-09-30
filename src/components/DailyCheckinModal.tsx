@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Droplets, Moon, Coffee, Heart, Activity, Check } from 'lucide-react';
-import { DailySymptomLog } from '../types/index.ts';
+import { X, Activity, Droplets, Moon, Heart, Sparkles, Check, AlertCircle } from 'lucide-react';
+import { DailyHealthUpdate } from '../types/index.ts';
 
 interface DailyCheckinModalProps {
   isOpen: boolean;
   onClose: () => void;
-  existingLog: DailySymptomLog | null;
-  onSave: (log: Partial<DailySymptomLog>) => void;
-  isCycleTracking: boolean;
+  existingLog: DailyHealthUpdate | null;
+  onSave: (log: Partial<DailyHealthUpdate>) => void;
 }
 
 export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
@@ -15,29 +14,41 @@ export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
   onClose,
   existingLog,
   onSave,
-  isCycleTracking,
 }) => {
   if (!isOpen) return null;
 
-  const [mood, setMood] = useState<DailySymptomLog['mood']>(existingLog?.mood || 'peaceful');
-  const [fatigueLevel, setFatigueLevel] = useState<number>(existingLog?.fatigueLevel ?? 2);
-  const [stressLevel, setStressLevel] = useState<number>(existingLog?.stressLevel ?? 2);
-  const [mentalFocus, setMentalFocus] = useState<number>(existingLog?.mentalFocus ?? 4);
+  const [restingHeartRate, setRestingHeartRate] = useState<number>(existingLog?.restingHeartRate ?? 72);
+  const [bloodPressure, setBloodPressure] = useState<string>(existingLog?.bloodPressure || '118/76');
+  const [weightKg, setWeightKg] = useState<number>(existingLog?.weightKg ?? 62.0);
 
+  const [energyLevel, setEnergyLevel] = useState<number>(existingLog?.energyLevel ?? 4);
+  const [stressLevel, setStressLevel] = useState<number>(existingLog?.stressLevel ?? 2);
+  const [mood, setMood] = useState<DailyHealthUpdate['mood']>(existingLog?.mood || 'productive');
+
+  const [waterGlasses, setWaterGlasses] = useState<number>(existingLog?.waterGlasses ?? 6);
   const [sleepHours, setSleepHours] = useState<number>(existingLog?.sleepHours ?? 7.5);
   const [sleepQuality, setSleepQuality] = useState<number>(existingLog?.sleepQuality ?? 4);
-  const [waterGlasses, setWaterGlasses] = useState<number>(existingLog?.waterGlasses ?? 6);
-  const [exerciseMinutes, setExerciseMinutes] = useState<number>(existingLog?.exerciseMinutes ?? 30);
-  const [caffeineCups, setCaffeineCups] = useState<number>(existingLog?.caffeineCups ?? 1);
+  const [activityMinutes, setActivityMinutes] = useState<number>(existingLog?.activityMinutes ?? 30);
+  const [activityType, setActivityType] = useState<string>(existingLog?.activityType || 'Brisk walking');
+  const [screenTimeHours, setScreenTimeHours] = useState<number>(existingLog?.screenTimeHours ?? 5.5);
+  const [nutritionQuality, setNutritionQuality] = useState<DailyHealthUpdate['nutritionQuality']>(
+    existingLog?.nutritionQuality || 'healthy_balanced'
+  );
 
-  const [cramps, setCramps] = useState<DailySymptomLog['cramps']>(existingLog?.cramps || 'none');
-  const [headache, setHeadache] = useState<boolean>(existingLog?.headache || false);
-  const [bloating, setBloating] = useState<boolean>(existingLog?.bloating || false);
-  const [skinCondition, setSkinCondition] = useState<DailySymptomLog['skinCondition']>(existingLog?.skinCondition || 'clear');
-  const [periodFlow, setPeriodFlow] = useState<DailySymptomLog['periodFlow']>(existingLog?.periodFlow || 'none');
-
-  const defaultSupplements = ['Iron + Vitamin C', 'Vitamin D3 (2000 IU)', 'Magnesium', 'Omega-3', 'Multivitamin'];
+  const defaultSupplements = ['Iron + Vitamin C', 'Vitamin D3 (2000 IU)', 'Magnesium Glycinate', 'Omega-3', 'Multivitamin'];
   const [supplements, setSupplements] = useState<string[]>(existingLog?.supplementsTaken || ['Iron + Vitamin C']);
+
+  const commonSymptoms = [
+    'Headache',
+    'Acid Reflux / Heartburn',
+    'Brain Fog / Fatigue',
+    'Eye Strain',
+    'Neck / Shoulder Tension',
+    'Bloating / Gas',
+    'Dizziness',
+    'Muscle Aches'
+  ];
+  const [symptoms, setSymptoms] = useState<string[]>(existingLog?.symptomsReported || []);
   const [notes, setNotes] = useState<string>(existingLog?.notes || '');
 
   const toggleSupplement = (supp: string) => {
@@ -48,37 +59,44 @@ export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
     }
   };
 
+  const toggleSymptom = (symp: string) => {
+    if (symptoms.includes(symp)) {
+      setSymptoms(symptoms.filter((s) => s !== symp));
+    } else {
+      setSymptoms([...symptoms, symp]);
+    }
+  };
+
   const handleSave = () => {
     onSave({
       date: new Date().toISOString().split('T')[0],
-      mood,
-      fatigueLevel,
+      restingHeartRate,
+      bloodPressure,
+      weightKg,
+      energyLevel,
       stressLevel,
-      mentalFocus,
+      mood,
+      waterGlasses,
       sleepHours,
       sleepQuality,
-      waterGlasses,
-      exerciseMinutes,
-      caffeineCups,
-      cramps,
-      headache,
-      bloating,
-      skinCondition,
-      periodFlow,
+      activityMinutes,
+      activityType,
+      screenTimeHours,
+      nutritionQuality,
       supplementsTaken: supplements,
+      symptomsReported: symptoms,
       notes,
     });
     onClose();
   };
 
-  const moods: { id: DailySymptomLog['mood']; label: string; emoji: string }[] = [
-    { id: 'peaceful', label: 'Peaceful', emoji: '😌' },
-    { id: 'energetic', label: 'High Energy', emoji: '⚡' },
-    { id: 'focused', label: 'Deep Focus', emoji: '🎯' },
-    { id: 'anxious', label: 'Anxious', emoji: '😰' },
-    { id: 'irritable', label: 'Sensitive', emoji: '😤' },
-    { id: 'low', label: 'Low Mood', emoji: '🌧️' },
-    { id: 'stressed', label: 'Exam/Work Stress', emoji: '📚' },
+  const moods: { id: DailyHealthUpdate['mood']; label: string }[] = [
+    { id: 'great', label: 'Great & Energetic' },
+    { id: 'productive', label: 'Productive & Focused' },
+    { id: 'normal', label: 'Normal' },
+    { id: 'fatigued', label: 'Fatigued / Low Stamina' },
+    { id: 'stressed', label: 'Stressed / Overwhelmed' },
+    { id: 'anxious', label: 'Anxious / Restless' },
   ];
 
   return (
@@ -87,8 +105,10 @@ export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
         {/* Header */}
         <div className="sticky top-0 bg-white/95 backdrop-blur-md px-6 py-4 border-b border-slate-100 flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-rose-500" />
-            <h2 className="text-base font-bold text-slate-900">Today’s Body & Mind Check-In</h2>
+            <Activity className="w-5 h-5 text-rose-600" />
+            <h2 className="text-base font-bold text-slate-900">
+              Log Today’s Health Vitals & Daily Habits
+            </h2>
           </div>
           <button
             onClick={onClose}
@@ -99,212 +119,257 @@ export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Mood Section */}
+          {/* Section 1: Clinical Vitals */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
-              1. How are you feeling emotionally?
+              1. Clinical Vitals (Optional / Estimated)
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[11px] font-semibold text-slate-600 block mb-1">
+                  Blood Pressure (mmHg)
+                </span>
+                <input
+                  type="text"
+                  value={bloodPressure}
+                  onChange={(e) => setBloodPressure(e.target.value)}
+                  placeholder="118/76"
+                  className="w-full text-xs font-bold p-1.5 rounded-lg border border-slate-300 bg-white"
+                />
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[11px] font-semibold text-slate-600 block mb-1">
+                  Resting Heart Rate (bpm)
+                </span>
+                <input
+                  type="number"
+                  value={restingHeartRate}
+                  onChange={(e) => setRestingHeartRate(parseInt(e.target.value))}
+                  placeholder="72"
+                  className="w-full text-xs font-bold p-1.5 rounded-lg border border-slate-300 bg-white"
+                />
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[11px] font-semibold text-slate-600 block mb-1">
+                  Current Weight (kg)
+                </span>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={weightKg}
+                  onChange={(e) => setWeightKg(parseFloat(e.target.value))}
+                  placeholder="62.0"
+                  className="w-full text-xs font-bold p-1.5 rounded-lg border border-slate-300 bg-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Mood & Energy */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
+              2. Energy & Mental State
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {moods.map((m) => (
                 <button
                   key={m.id}
                   type="button"
                   onClick={() => setMood(m.id)}
-                  className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all ${
+                  className={`p-2.5 rounded-xl border text-xs font-medium text-left transition-all ${
                     mood === m.id
-                      ? 'border-rose-500 bg-rose-50/60 text-rose-950 font-semibold shadow-xs'
-                      : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                      ? 'border-slate-900 bg-slate-900 text-white font-semibold shadow-xs'
+                      : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-slate-50'
                   }`}
                 >
-                  <span className="text-lg">{m.emoji}</span>
-                  <span className="text-xs">{m.label}</span>
+                  {m.label}
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* Period Flow (if tracking cycle) */}
-          {isCycleTracking && (
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                2. Menstrual Flow
-              </label>
-              <div className="grid grid-cols-5 gap-2">
-                {(['none', 'spotting', 'light', 'medium', 'heavy'] as const).map((flow) => (
-                  <button
-                    key={flow}
-                    type="button"
-                    onClick={() => setPeriodFlow(flow)}
-                    className={`py-2 px-1 text-center rounded-lg border text-xs capitalize transition-all ${
-                      periodFlow === flow
-                        ? 'border-rose-500 bg-rose-500 text-white font-medium'
-                        : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    {flow}
-                  </button>
-                ))}
+            <div className="grid grid-cols-2 gap-4 mt-3">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="font-semibold text-slate-700">Energy Level:</span>
+                  <span className="font-bold text-slate-900">{energyLevel} / 5</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="5"
+                  value={energyLevel}
+                  onChange={(e) => setEnergyLevel(parseInt(e.target.value))}
+                  className="w-full accent-rose-600"
+                />
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="font-semibold text-slate-700">Stress Level:</span>
+                  <span className="font-bold text-slate-900">{stressLevel} / 5</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="5"
+                  value={stressLevel}
+                  onChange={(e) => setStressLevel(parseInt(e.target.value))}
+                  className="w-full accent-indigo-600"
+                />
               </div>
             </div>
-          )}
+          </div>
 
-          {/* Physical Sensations */}
+          {/* Section 3: Daily Habits (Water, Sleep, Activity, Screen) */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
-              {isCycleTracking ? '3. Physical Sensations' : '2. Physical Sensations'}
+              3. Daily Habit Tracking
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {/* Cramps */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-xs font-medium text-slate-700 block mb-1.5">Cramps</span>
-                <select
-                  value={cramps}
-                  onChange={(e) => setCramps(e.target.value as any)}
-                  className="w-full text-xs p-1.5 rounded-md border border-slate-200 bg-white text-slate-800"
-                >
-                  <option value="none">None</option>
-                  <option value="mild">Mild</option>
-                  <option value="moderate">Moderate</option>
-                  <option value="severe">Severe</option>
-                </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Hydration */}
+              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Droplets className="w-3.5 h-3.5 text-sky-500" />
+                    Hydration
+                  </span>
+                  <span className="text-[11px] text-slate-400">~{waterGlasses * 250} ml logged</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setWaterGlasses(Math.max(0, waterGlasses - 1))}
+                    className="w-7 h-7 rounded-lg bg-white border border-slate-300 font-bold text-xs"
+                  >
+                    -
+                  </button>
+                  <span className="text-sm font-bold tabular-nums">{waterGlasses}</span>
+                  <button
+                    type="button"
+                    onClick={() => setWaterGlasses(waterGlasses + 1)}
+                    className="w-7 h-7 rounded-lg bg-white border border-slate-300 font-bold text-xs"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
-              {/* Skin */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-xs font-medium text-slate-700 block mb-1.5">Skin / Complexion</span>
-                <select
-                  value={skinCondition}
-                  onChange={(e) => setSkinCondition(e.target.value as any)}
-                  className="w-full text-xs p-1.5 rounded-md border border-slate-200 bg-white text-slate-800"
-                >
-                  <option value="clear">Clear & Radiant</option>
-                  <option value="oily">Oily T-Zone</option>
-                  <option value="breakouts">Breakouts / Acne</option>
-                  <option value="dry">Dry / Dehydrated</option>
-                </select>
+              {/* Sleep */}
+              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Moon className="w-3.5 h-3.5 text-indigo-500" />
+                    Sleep Hours
+                  </span>
+                  <span className="text-[11px] text-slate-400">Total duration</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="4"
+                    max="14"
+                    value={sleepHours}
+                    onChange={(e) => setSleepHours(parseFloat(e.target.value))}
+                    className="w-16 text-center text-xs font-bold p-1 rounded-lg border border-slate-300 bg-white"
+                  />
+                  <span className="text-xs text-slate-500">hrs</span>
+                </div>
               </div>
 
-              {/* Headache toggle */}
-              <button
-                type="button"
-                onClick={() => setHeadache(!headache)}
-                className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
-                  headache
-                    ? 'border-amber-500 bg-amber-50/70 text-amber-950 font-medium'
-                    : 'border-slate-200 bg-slate-50 text-slate-700'
-                }`}
-              >
-                <span className="text-xs">Headache</span>
-                <span className="text-[11px] text-slate-400 mt-1">{headache ? 'Present' : 'None'}</span>
-              </button>
+              {/* Activity */}
+              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Activity className="w-3.5 h-3.5 text-emerald-500" />
+                    Physical Activity
+                  </span>
+                  <span className="text-[11px] text-slate-400">{activityType}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="5"
+                    min="0"
+                    max="180"
+                    value={activityMinutes}
+                    onChange={(e) => setActivityMinutes(parseInt(e.target.value))}
+                    className="w-16 text-center text-xs font-bold p-1 rounded-lg border border-slate-300 bg-white"
+                  />
+                  <span className="text-xs text-slate-500">mins</span>
+                </div>
+              </div>
 
-              {/* Bloating toggle */}
-              <button
-                type="button"
-                onClick={() => setBloating(!bloating)}
-                className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
-                  bloating
-                    ? 'border-indigo-500 bg-indigo-50/70 text-indigo-950 font-medium'
-                    : 'border-slate-200 bg-slate-50 text-slate-700'
-                }`}
-              >
-                <span className="text-xs">Digestive Bloating</span>
-                <span className="text-[11px] text-slate-400 mt-1">{bloating ? 'Present' : 'None'}</span>
-              </button>
+              {/* Screen Time */}
+              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-800">Screen Time</span>
+                  <span className="text-[11px] text-slate-400 block">Laptops + Phones</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="1"
+                    max="16"
+                    value={screenTimeHours}
+                    onChange={(e) => setScreenTimeHours(parseFloat(e.target.value))}
+                    className="w-16 text-center text-xs font-bold p-1 rounded-lg border border-slate-300 bg-white"
+                  />
+                  <span className="text-xs text-slate-500">hrs</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Vitals & Habits Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Sleep */}
-            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                  <Moon className="w-3.5 h-3.5 text-indigo-500" />
-                  Sleep
-                </span>
-                <span className="text-xs font-bold text-slate-900 tabular-nums">{sleepHours} hrs</span>
-              </div>
-              <input
-                type="range"
-                min="4"
-                max="12"
-                step="0.5"
-                value={sleepHours}
-                onChange={(e) => setSleepHours(parseFloat(e.target.value))}
-                className="w-full accent-indigo-600 mt-2"
-              />
-            </div>
-
-            {/* Hydration */}
-            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                  <Droplets className="w-3.5 h-3.5 text-sky-500" />
-                  Hydration
-                </span>
-                <span className="text-xs font-bold text-slate-900 tabular-nums">{waterGlasses} glasses</span>
-              </div>
-              <div className="flex items-center justify-between gap-1 mt-2">
-                <button
-                  type="button"
-                  onClick={() => setWaterGlasses(Math.max(0, waterGlasses - 1))}
-                  className="px-2.5 py-0.5 rounded bg-white border border-slate-300 text-xs font-bold"
-                >
-                  -
-                </button>
-                <span className="text-xs text-slate-500 tabular-nums">~{waterGlasses * 250} ml</span>
-                <button
-                  type="button"
-                  onClick={() => setWaterGlasses(waterGlasses + 1)}
-                  className="px-2.5 py-0.5 rounded bg-white border border-slate-300 text-xs font-bold"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {/* Exercise */}
-            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5 text-emerald-500" />
-                  Movement
-                </span>
-                <span className="text-xs font-bold text-slate-900 tabular-nums">{exerciseMinutes} mins</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="90"
-                step="5"
-                value={exerciseMinutes}
-                onChange={(e) => setExerciseMinutes(parseInt(e.target.value))}
-                className="w-full accent-emerald-600 mt-2"
-              />
-            </div>
-          </div>
-
-          {/* Supplements Taken */}
+          {/* Section 4: Symptoms Reported Today */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Supplements / Prescribed Meds Taken Today
+              4. Symptoms Experienced Today (For Disease Pattern Tracking)
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {commonSymptoms.map((symp) => {
+                const isSelected = symptoms.includes(symp);
+                return (
+                  <button
+                    key={symp}
+                    type="button"
+                    onClick={() => toggleSymptom(symp)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      isSelected
+                        ? 'bg-rose-50 border-rose-300 text-rose-900 font-semibold'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {symp}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Section 5: Supplements */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+              5. Supplements & Meds Taken
             </label>
             <div className="flex flex-wrap gap-2">
               {defaultSupplements.map((supp) => {
-                const isSelected = supplements.includes(supp);
+                const isTaken = supplements.includes(supp);
                 return (
                   <button
                     key={supp}
                     type="button"
                     onClick={() => toggleSupplement(supp)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${
-                      isSelected
-                        ? 'bg-slate-900 text-white shadow-xs'
+                      isTaken
+                        ? 'bg-slate-900 text-white'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                   >
-                    {isSelected && <Check className="w-3.5 h-3.5 text-rose-300" />}
+                    {isTaken && <Check className="w-3.5 h-3.5 text-emerald-400" />}
                     <span>{supp}</span>
                   </button>
                 );
@@ -312,17 +377,17 @@ export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
             </div>
           </div>
 
-          {/* Personal Daily Note */}
+          {/* Personal Notes */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Personal Diary Note (Encrypted & Confidential)
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              Personal Health Notes
             </label>
             <textarea
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="E.g., Felt energetic after morning run, studied 4 hours in library, afternoon coffee gave mild jitters..."
-              className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-rose-500 text-slate-800"
+              placeholder="E.g., Felt alert during midday study, afternoon stairs caused mild shortness of breath..."
+              className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-900 text-slate-800"
             />
           </div>
         </div>
@@ -330,7 +395,7 @@ export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
         {/* Footer */}
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
           <span className="text-xs text-slate-400">
-            AuraHealth data isolation active
+            AuraHealth Medical Encrypted Store
           </span>
           <div className="flex items-center gap-2">
             <button
@@ -343,7 +408,7 @@ export const DailyCheckinModal: React.FC<DailyCheckinModalProps> = ({
               onClick={handleSave}
               className="px-5 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-sm"
             >
-              Save Check-In
+              Save Health Update
             </button>
           </div>
         </div>

@@ -1,11 +1,11 @@
 import {
   UserProfile,
-  DailySymptomLog,
+  DailyHealthUpdate,
   MedicalReport,
-  DailyWellnessPlan,
+  HabitGoal,
   HabitReminder,
   ChatMessage,
-  HealthStory
+  DiseaseCondition
 } from '../types/index.ts';
 
 const TOKEN_KEY = 'aurahealth_jwt_token';
@@ -48,7 +48,7 @@ export const apiClient = {
   },
 
   // Auth
-  async login(email: string, password: string):Promise<{ token: string; profile: UserProfile }> {
+  async login(email: string, password: string): Promise<{ token: string; profile: UserProfile }> {
     const data = await this.request<{ token: string; profile: UserProfile }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
@@ -77,19 +77,40 @@ export const apiClient = {
     });
   },
 
-  // Symptoms
-  async getSymptoms(): Promise<DailySymptomLog[]> {
-    return this.request<DailySymptomLog[]>('/api/symptoms');
+  // Daily Health Updates & Vitals
+  async getDailyUpdates(): Promise<DailyHealthUpdate[]> {
+    return this.request<DailyHealthUpdate[]>('/api/health/updates');
   },
 
-  async logSymptom(log: Partial<DailySymptomLog>): Promise<DailySymptomLog> {
-    return this.request<DailySymptomLog>('/api/symptoms', {
+  async logDailyHealth(data: Partial<DailyHealthUpdate>): Promise<DailyHealthUpdate> {
+    return this.request<DailyHealthUpdate>('/api/health/updates', {
       method: 'POST',
-      body: JSON.stringify(log),
+      body: JSON.stringify(data),
     });
   },
 
-  // Reports
+  // Daily Habits & Goals
+  async getHabitGoals(): Promise<HabitGoal[]> {
+    return this.request<HabitGoal[]>('/api/habits/goals');
+  },
+
+  async updateHabitGoal(id: string, updates: Partial<HabitGoal>): Promise<HabitGoal[]> {
+    return this.request<HabitGoal[]>(`/api/habits/goals/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  // Diseases & Conditions
+  async getDiseases(): Promise<DiseaseCondition[]> {
+    return this.request<DiseaseCondition[]>('/api/diseases');
+  },
+
+  async getDiseaseById(id: string): Promise<DiseaseCondition> {
+    return this.request<DiseaseCondition>(`/api/diseases/${id}`);
+  },
+
+  // Medical Reports
   async getReports(): Promise<MedicalReport[]> {
     return this.request<MedicalReport[]>('/api/reports');
   },
@@ -111,22 +132,10 @@ export const apiClient = {
     });
   },
 
-  // Trends
+  // Longitudinal Trends
   async getTrends(parameterQuery?: string): Promise<{ parameterName: string; category: string; records: any[] }[]> {
     const qs = parameterQuery ? `?parameter=${encodeURIComponent(parameterQuery)}` : '';
     return this.request<any[]>(`/api/trends${qs}`);
-  },
-
-  // Wellness Plan
-  async getWellnessPlan(): Promise<DailyWellnessPlan> {
-    return this.request<DailyWellnessPlan>('/api/wellness/plan');
-  },
-
-  async toggleRoutineItem(routineId: string): Promise<DailyWellnessPlan> {
-    return this.request<DailyWellnessPlan>('/api/wellness/plan/routine/toggle', {
-      method: 'POST',
-      body: JSON.stringify({ routineId }),
-    });
   },
 
   // Reminders
@@ -151,11 +160,6 @@ export const apiClient = {
     return this.request<HabitReminder[]>(`/api/reminders/${id}`, {
       method: 'DELETE',
     });
-  },
-
-  // Stories
-  async getStories(): Promise<HealthStory[]> {
-    return this.request<HealthStory[]>('/api/stories');
   },
 
   // Chat

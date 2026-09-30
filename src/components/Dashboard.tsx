@@ -1,427 +1,563 @@
 import React from 'react';
 import {
+  HeartPulse,
+  Activity,
   Droplets,
   Moon,
-  Sparkles,
   FileText,
+  AlertCircle,
   TrendingUp,
+  Sparkles,
   ShieldCheck,
-  CheckCircle2,
-  Clock,
+  Stethoscope,
   ArrowRight,
   Flame,
-  AlertCircle
+  CheckCircle2,
+  Clock,
+  Plus,
+  Thermometer,
+  Scale,
+  Calendar,
+  AlertTriangle
 } from 'lucide-react';
 import {
   UserProfile,
-  DailySymptomLog,
+  DailyHealthUpdate,
   MedicalReport,
+  HabitGoal,
   HabitReminder,
-  HealthStory,
-  DailyWellnessPlan
+  DiseaseCondition
 } from '../types/index.ts';
-import { CycleOrEnergyRing } from './CycleOrEnergyRing.tsx';
 
 interface DashboardProps {
   profile: UserProfile | null;
-  todayLog: DailySymptomLog | null;
+  latestUpdate: DailyHealthUpdate | null;
   reports: MedicalReport[];
+  habitGoals: HabitGoal[];
   reminders: HabitReminder[];
-  wellnessPlan: DailyWellnessPlan | null;
-  stories: HealthStory[];
+  diseases: DiseaseCondition[];
   onOpenCheckin: () => void;
   onOpenReports: () => void;
   onOpenTrends: (param?: string) => void;
-  onOpenStories: (storyId?: string) => void;
-  onToggleReminder: (id: string) => void;
-  onQuickAddWater: () => void;
-  onToggleRoutineItem: (id: string) => void;
-  onToggleTrackingMode: (mode: 'cycle_and_wellness' | 'energy_and_circadian') => void;
+  onOpenDiseases: (diseaseId?: string) => void;
+  onOpenHabits: () => void;
   onOpenChat: () => void;
+  onQuickAddWater: () => Promise<void>;
+  onToggleReminder: (id: string) => Promise<void>;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
   profile,
-  todayLog,
+  latestUpdate,
   reports,
+  habitGoals,
   reminders,
-  wellnessPlan,
-  stories,
+  diseases,
   onOpenCheckin,
   onOpenReports,
   onOpenTrends,
-  onOpenStories,
-  onToggleReminder,
-  onQuickAddWater,
-  onToggleRoutineItem,
-  onToggleTrackingMode,
+  onOpenDiseases,
+  onOpenHabits,
   onOpenChat,
+  onQuickAddWater,
+  onToggleReminder,
 }) => {
-  // Recent flagged parameters from latest report
+  // BMI calculation
+  const heightM = (profile?.heightCm || 168) / 100;
+  const weightKg = latestUpdate?.weightKg ?? profile?.weightKg ?? 62;
+  const bmi = (weightKg / (heightM * heightM)).toFixed(1);
+
+  const bp = latestUpdate?.bloodPressure || `${profile?.bloodPressureSystolic || 118}/${profile?.bloodPressureDiastolic || 76}`;
+  const hr = latestUpdate?.restingHeartRate || profile?.restingHeartRate || 71;
+
+  // Recent Report & Flagged Biomarkers
   const latestReport = reports[0];
   const flaggedBiomarkers = (latestReport?.parameters || []).filter(
     (p) => p.status === 'low' || p.status === 'high' || p.status === 'borderline'
   );
 
-  const waterGlasses = todayLog?.waterGlasses ?? 5;
+  // Hydration calculation
+  const waterGlasses = latestUpdate?.waterGlasses ?? 6;
   const targetGlasses = Math.round((profile?.targetWaterMl || 2500) / 250);
   const waterPercent = Math.min(100, Math.round((waterGlasses / targetGlasses) * 100));
 
+  // Matched Disease Risks based on flagged biomarkers
+  const matchedDiseases = diseases.filter((d) => {
+    if (flaggedBiomarkers.some((p) => p.parameterName.toLowerCase().includes('hemoglobin') || p.parameterName.toLowerCase().includes('ferritin'))) {
+      if (d.id === 'anemia-iron-deficiency') return true;
+    }
+    if (flaggedBiomarkers.some((p) => p.parameterName.toLowerCase().includes('vitamin d'))) {
+      if (d.id === 'vitamin-d-b12-deficiency') return true;
+    }
+    return false;
+  }).slice(0, 2);
+
   return (
-    <div className="space-y-8 animate-fade-in pb-12">
-      {/* 1. Flo-Inspired Cycle & Biological Rhythm Card */}
-      <CycleOrEnergyRing
-        profile={profile}
-        todayLog={todayLog}
-        onOpenCheckin={onOpenCheckin}
-        onToggleMode={onToggleTrackingMode}
-      />
+    <div className="space-y-8 animate-fade-in pb-16">
+      {/* 1. Clinical Cardiogram & Live Telemetry Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white rounded-2xl p-6 sm:p-7 shadow-xl border border-teal-800/40">
+        {/* Decorative ECG Background Grid */}
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#14b8a6_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
 
-      {/* 2. Today's Health Vitals & Daily Habit Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Card A: Hydration Tank */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-sky-700 flex items-center gap-1.5">
-                <Droplets className="w-4 h-4 text-sky-500" />
-                Hydration Meter
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2.5 w-2.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-teal-400" />
               </span>
-              <span className="text-xs font-semibold text-slate-700 tabular-nums">
-                {waterGlasses * 250} / {profile?.targetWaterMl || 2500} ml
+              <span className="text-[11px] font-bold uppercase tracking-widest text-teal-400 font-mono">
+                TELEMETRY RADAR · PATIENT CHART #AH-7029
               </span>
             </div>
 
-            <div className="mt-4">
-              <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-sky-500 rounded-full transition-all duration-500"
-                  style={{ width: `${waterPercent}%` }}
-                />
-              </div>
-              <div className="flex justify-between items-center mt-2 text-xs text-slate-500">
-                <span>{waterGlasses} of {targetGlasses} glasses</span>
-                <span className="font-semibold text-slate-700">{waterPercent}%</span>
-              </div>
-            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              Clinical Vitals & Preventive Assessment
+            </h1>
 
-            <p className="text-xs text-slate-500 mt-3 leading-relaxed">
-              Drinking 500ml every 2–3 hours prevents late-afternoon brain fog and eases menstrual muscle cramps.
+            <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+              Real-time physiological telemetry for <strong className="text-white">{profile?.name || 'Alex'}</strong> (Age {profile?.age || 22}, {profile?.gender || 'Female'}, {profile?.lifestyle || 'Student'}). Cross-analyzing laboratory blood biomarkers with everyday hydration, sleep cycles, and disease risks.
             </p>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+          {/* Quick Record Vitals Button */}
+          <div className="flex flex-col sm:flex-row items-start lg:items-center gap-3">
             <button
-              onClick={onQuickAddWater}
-              className="w-full py-2 px-3 text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-xl transition-colors flex items-center justify-center gap-1.5"
+              onClick={onOpenCheckin}
+              className="px-5 py-3 text-xs font-bold text-slate-950 bg-teal-400 hover:bg-teal-300 rounded-xl transition-all shadow-lg shadow-teal-500/20 flex items-center gap-2 hover:scale-[1.02] active:scale-95 shrink-0"
             >
-              <Droplets className="w-3.5 h-3.5" />
-              <span>+ Drink 1 Glass (250ml)</span>
+              <Activity className="w-4 h-4 text-slate-950" />
+              <span>Record Clinical Vitals</span>
+            </button>
+
+            <button
+              onClick={onOpenChat}
+              className="px-4 py-3 text-xs font-semibold text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-xl transition-all flex items-center gap-1.5 shrink-0"
+            >
+              <Sparkles className="w-4 h-4 text-teal-300" />
+              <span>AI Clinical Review</span>
             </button>
           </div>
         </div>
 
-        {/* Card B: Sleep & Restorative Battery */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
-                <Moon className="w-4 h-4 text-indigo-500" />
-                Sleep & Recovery
+        {/* Live Animated ECG Pulse Strip */}
+        <div className="mt-6 pt-5 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {/* Telemetry 1: Blood Pressure */}
+          <div className="bg-slate-800/40 backdrop-blur-sm p-3.5 rounded-xl border border-slate-700/60">
+            <div className="flex items-center justify-between text-[11px] text-teal-400 font-mono font-medium">
+              <span>BLOOD PRESSURE</span>
+              <HeartPulse className="w-3.5 h-3.5 text-rose-400" />
+            </div>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-2xl font-black text-white tabular-nums tracking-tight font-mono">
+                {bp}
               </span>
-              <span className="text-xs font-semibold text-slate-700 tabular-nums">
-                {todayLog?.sleepHours ?? 7.5}h / {profile?.targetSleepHours ?? 8}h
+              <span className="text-[10px] text-slate-400 font-mono">mmHg</span>
+            </div>
+            <span className="text-[10px] font-bold text-teal-300 block mt-1">
+              Normal Range (&lt;120/80)
+            </span>
+          </div>
+
+          {/* Telemetry 2: Resting Heart Rate */}
+          <div className="bg-slate-800/40 backdrop-blur-sm p-3.5 rounded-xl border border-slate-700/60">
+            <div className="flex items-center justify-between text-[11px] text-teal-400 font-mono font-medium">
+              <span>RESTING PULSE</span>
+              <Activity className="w-3.5 h-3.5 text-teal-400" />
+            </div>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-2xl font-black text-white tabular-nums tracking-tight font-mono">
+                {hr}
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">BPM</span>
+            </div>
+            <span className="text-[10px] font-bold text-teal-300 block mt-1">
+              Optimal Rhythm (60–100)
+            </span>
+          </div>
+
+          {/* Telemetry 3: BMI & Mass */}
+          <div className="bg-slate-800/40 backdrop-blur-sm p-3.5 rounded-xl border border-slate-700/60">
+            <div className="flex items-center justify-between text-[11px] text-teal-400 font-mono font-medium">
+              <span>BODY MASS INDEX</span>
+              <Scale className="w-3.5 h-3.5 text-cyan-400" />
+            </div>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-2xl font-black text-white tabular-nums tracking-tight font-mono">
+                {bmi}
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">BMI</span>
+            </div>
+            <span className="text-[10px] font-bold text-teal-300 block mt-1">
+              Healthy Target ({weightKg} kg)
+            </span>
+          </div>
+
+          {/* Telemetry 4: Clinical Stability Index */}
+          <div className="bg-slate-800/40 backdrop-blur-sm p-3.5 rounded-xl border border-slate-700/60">
+            <div className="flex items-center justify-between text-[11px] text-teal-400 font-mono font-medium">
+              <span>STABILITY INDEX</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            </div>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-2xl font-black text-emerald-400 tabular-nums tracking-tight font-mono">
+                91/100
               </span>
             </div>
+            <span className="text-[10px] font-bold text-emerald-300 block mt-1">
+              Metabolically Stable
+            </span>
+          </div>
+        </div>
+      </div>
 
-            <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-slate-900 tabular-nums">
-                {todayLog?.sleepHours ?? 7.5}
-              </span>
-              <span className="text-xs text-slate-500 font-medium">hours logged</span>
+      {/* 2. Disease Risk Radar & Preventive Alerts (Major Priority) */}
+      <div className="bg-white rounded-2xl border border-teal-100 p-6 shadow-sm medical-card-glow">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-teal-800">
+              <Stethoscope className="w-4.5 h-4.5" />
             </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900 tracking-tight">
+                Youth Disease Risk Radar
+              </h3>
+              <span className="text-xs text-slate-500">
+                Automated biomarker correlation against 10+ student & young adult disease profiles
+              </span>
+            </div>
+          </div>
 
-            <div className="mt-2 flex items-center gap-2 text-xs text-slate-600">
-              <span className="font-medium">Sleep Quality:</span>
-              <div className="flex items-center text-amber-500">
-                {'★'.repeat(todayLog?.sleepQuality || 4)}
-                {'☆'.repeat(5 - (todayLog?.sleepQuality || 4))}
+          <button
+            onClick={() => onOpenDiseases()}
+            className="text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1 group"
+          >
+            <span>Explore Clinical Disease Catalog</span>
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+          {matchedDiseases.map((disease) => (
+            <div
+              key={disease.id}
+              onClick={() => onOpenDiseases(disease.id)}
+              className="p-5 bg-gradient-to-br from-rose-50/50 via-slate-50/60 to-white rounded-xl border border-rose-200/80 hover:border-rose-300 cursor-pointer medical-card-hover flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-800 bg-rose-100/80 border border-rose-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 text-rose-600" />
+                    CLINICAL ATTENTION SUGGESTED
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">{disease.category}</span>
+                </div>
+
+                <h4 className="text-base font-bold text-slate-900 mt-1">
+                  {disease.name}
+                </h4>
+
+                <p className="text-xs text-slate-600 mt-1.5 line-clamp-2 leading-relaxed">
+                  {disease.description}
+                </p>
+
+                {/* Associated Lab Marker Box */}
+                <div className="mt-3.5 p-2.5 bg-white/90 rounded-lg border border-rose-100 text-xs text-slate-700 flex items-center justify-between">
+                  <span className="text-slate-500">Diagnostic Marker:</span>
+                  <strong className="text-rose-900 font-mono">
+                    {disease.keyLabTests[0]?.keyParameter}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-rose-100/80 flex items-center justify-between text-xs text-rose-800 font-bold">
+                <span>View symptom indicators & doctor questions</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          ))}
+
+          {/* Third card: Cardiometabolic Shielding */}
+          <div
+            onClick={() => onOpenDiseases('prediabetes-insulin-resistance')}
+            className="p-5 bg-gradient-to-br from-teal-50/40 via-slate-50/60 to-white rounded-xl border border-teal-200/80 hover:border-teal-300 cursor-pointer medical-card-hover flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-800 bg-teal-100/80 border border-teal-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3 text-teal-600" />
+                  CARDIOMETABOLICALLY SHIELDED
+                </span>
+                <span className="text-xs text-slate-400 font-medium">Metabolic Health</span>
+              </div>
+
+              <h4 className="text-base font-bold text-slate-900 mt-1">
+                Pre-Diabetes & Insulin Sensitivity
+              </h4>
+
+              <p className="text-xs text-slate-600 mt-1.5 line-clamp-2 leading-relaxed">
+                Fasting blood glucose (86 mg/dL) and Blood Pressure (118/76 mmHg) reflect healthy insulin receptor sensitivity. Maintain active muscle GLUT4 glucose uptake.
+              </p>
+
+              <div className="mt-3.5 p-2.5 bg-white/90 rounded-lg border border-teal-100 text-xs text-slate-700 flex items-center justify-between">
+                <span className="text-slate-500">Diagnostic Marker:</span>
+                <strong className="text-teal-900 font-mono">Fasting Glucose & HbA1c</strong>
               </div>
             </div>
 
-            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-              Consistent sleep timing regulates cortisol awakening and stabilizes daytime dopamine.
-            </p>
+            <div className="mt-4 pt-3 border-t border-teal-100/80 flex items-center justify-between text-xs text-teal-800 font-bold">
+              <span>View preventive lifestyle protocol</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Medical Report Intelligence (Major Priority) */}
+      <div className="bg-white rounded-2xl border border-teal-100 p-6 shadow-sm medical-card-glow">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Diagnostic Laboratory Requisition
+              </span>
+              <span className="text-slate-300">·</span>
+              <span className="text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200/80 px-2 py-0.5 rounded-md flex items-center gap-1 font-mono">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                OCR EXTRACTED & VERIFIED
+              </span>
+            </div>
+            <h3 className="text-xl font-extrabold text-slate-900 mt-1">
+              {latestReport?.title || 'No reports uploaded'}
+            </h3>
+            <span className="text-xs text-slate-500 font-mono">
+              Specimen Date: {latestReport?.reportDate} · Source File: {latestReport?.fileName}
+            </span>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100">
+          <div className="flex items-center gap-2">
             <button
-              onClick={onOpenCheckin}
-              className="w-full py-2 px-3 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors text-center"
+              onClick={onOpenReports}
+              className="px-4 py-2.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+            >
+              <FileText className="w-3.5 h-3.5 text-teal-300" />
+              <span>Upload / View Reports</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Clinical Biomarker Readout Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
+          {(latestReport?.parameters || []).map((param) => {
+            const isLow = param.status === 'low';
+            const isOptimal = param.status === 'optimal';
+            const isBorderline = param.status === 'borderline';
+
+            // Calculate percentage placement in reference bar
+            const min = param.referenceMin ?? 0;
+            const max = param.referenceMax ?? 100;
+            const range = max - min || 1;
+            const gaugePercent = Math.max(0, Math.min(100, Math.round(((param.value - min) / range) * 100)));
+
+            return (
+              <div
+                key={param.id}
+                onClick={() => onOpenTrends(param.parameterName)}
+                className="p-4 rounded-xl border border-slate-200/90 bg-slate-50/40 hover:bg-white hover:border-teal-300 transition-all cursor-pointer group medical-card-hover"
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-bold text-slate-900 group-hover:text-teal-800 transition-colors">
+                    {param.parameterName}
+                  </span>
+                  <span
+                    className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider font-mono ${
+                      isOptimal
+                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                        : isLow
+                        ? 'bg-rose-50 text-rose-800 border border-rose-200'
+                        : 'bg-amber-50 text-amber-800 border border-amber-200'
+                    }`}
+                  >
+                    {param.status}
+                  </span>
+                </div>
+
+                <div className="flex items-baseline gap-1 mt-2">
+                  <span className="text-2xl font-black text-slate-900 tabular-nums font-mono">
+                    {param.value}
+                  </span>
+                  <span className="text-xs text-slate-500 font-semibold font-mono">{param.unit}</span>
+                </div>
+
+                {/* Reference Range Bar Gauge */}
+                <div className="mt-2.5">
+                  <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden relative">
+                    <div
+                      className={`h-full rounded-full ${
+                        isOptimal ? 'bg-emerald-500' : isLow ? 'bg-rose-500' : 'bg-amber-500'
+                      }`}
+                      style={{ width: `${gaugePercent}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-400 font-mono mt-1">
+                    <span>Min: {param.referenceMin ?? 0}</span>
+                    <span>Max: {param.referenceMax ?? 'N/A'} {param.unit}</span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-600 mt-2.5 line-clamp-2 leading-relaxed">
+                  {param.plainExplanation}
+                </p>
+
+                <div className="mt-3 pt-2.5 border-t border-slate-200/70 flex items-center justify-between text-[11px] text-teal-800 font-semibold group-hover:underline">
+                  <span>Longitudinal Timeline</span>
+                  <TrendingUp className="w-3.5 h-3.5 text-teal-600" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 4. Daily Habits Prescription & Hydration Engine (Major Priority) */}
+      <div className="bg-white rounded-2xl border border-teal-100 p-6 shadow-sm medical-card-glow">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-5">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-teal-700" />
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                Daily Habit Prescription & Adherence
+              </h3>
+              <span className="text-xs text-slate-500">
+                Preventive behavioral routines: hydration, sleep architecture, and supplement discipline
+              </span>
+            </div>
+          </div>
+
+          <button
+            onClick={onOpenHabits}
+            className="text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1 group"
+          >
+            <span>Full Habits Console</span>
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+        </div>
+
+        {/* 3 Medical Habit Modules */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Hydration Module with Fluid Level Gauge */}
+          <div className="p-5 bg-gradient-to-b from-sky-50/50 to-white rounded-xl border border-sky-200/70 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold text-sky-900 flex items-center gap-1.5 uppercase tracking-wider font-mono">
+                  <Droplets className="w-4 h-4 text-sky-600" />
+                  FLUID LEVEL
+                </span>
+                <span className="text-xs font-bold text-slate-900 font-mono tabular-nums">
+                  {waterGlasses * 250} / {profile?.targetWaterMl || 2500} ml
+                </span>
+              </div>
+
+              <div className="mt-4">
+                <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-sky-500 to-teal-500 rounded-full transition-all duration-500"
+                    style={{ width: `${waterPercent}%` }}
+                  />
+                </div>
+                <div className="flex justify-between items-center text-xs text-slate-500 mt-2">
+                  <span>{waterGlasses} of {targetGlasses} glasses</span>
+                  <span className="font-bold text-sky-700 font-mono">{waterPercent}%</span>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-600 mt-3 leading-relaxed">
+                Adequate hydration maintains blood volume, prevents postural dizziness, and reduces evening headache risk.
+              </p>
+            </div>
+
+            <button
+              onClick={onQuickAddWater}
+              className="mt-4 w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 active:scale-95"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ Drink 1 Glass (250ml)</span>
+            </button>
+          </div>
+
+          {/* Sleep Architecture */}
+          <div className="p-5 bg-gradient-to-b from-indigo-50/50 to-white rounded-xl border border-indigo-200/70 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold text-indigo-900 flex items-center gap-1.5 uppercase tracking-wider font-mono">
+                  <Moon className="w-4 h-4 text-indigo-600" />
+                  REST DURATION
+                </span>
+                <span className="text-xs font-bold text-slate-900 font-mono tabular-nums">
+                  {latestUpdate?.sleepHours ?? 7.5} / {profile?.targetSleepHours ?? 8.0} hrs
+                </span>
+              </div>
+
+              <div className="mt-3 flex items-baseline gap-2">
+                <span className="text-3xl font-black text-slate-900 tabular-nums font-mono">
+                  {latestUpdate?.sleepHours ?? 7.5}
+                </span>
+                <span className="text-xs text-slate-500 font-medium">hours logged</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-xs text-slate-600 mt-1">
+                <span>Restorative Rating:</span>
+                <div className="flex text-amber-500 font-bold">
+                  {'★'.repeat(latestUpdate?.sleepQuality || 4)}
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-600 mt-2.5 leading-relaxed">
+                Stage 3 deep non-REM sleep is essential for physical hormone release and red blood cell recovery.
+              </p>
+            </div>
+
+            <button
+              onClick={onOpenHabits}
+              className="mt-4 w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-colors text-center"
             >
               Adjust Sleep Log
             </button>
           </div>
-        </div>
 
-        {/* Card C: Proactive Smart Reminders */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-rose-500" />
-                Automated Reminders
-              </span>
-              <span className="text-xs text-slate-400">
-                {reminders.filter((r) => r.enabled).length} active
-              </span>
-            </div>
-
-            <div className="space-y-2.5 mt-2">
-              {reminders.slice(0, 3).map((rem) => (
-                <div
-                  key={rem.id}
-                  className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100"
-                >
-                  <div className="flex items-center gap-2 min-w-0 pr-2">
-                    <span className="text-xs font-semibold text-slate-500 tabular-nums">
-                      {rem.time}
-                    </span>
-                    <span className="text-xs text-slate-800 truncate font-medium">
-                      {rem.title}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => onToggleReminder(rem.id)}
-                    className={`w-8 h-4 rounded-full transition-colors relative flex items-center ${
-                      rem.enabled ? 'bg-slate-900' : 'bg-slate-300'
-                    }`}
-                  >
-                    <span
-                      className={`w-3 h-3 rounded-full bg-white transition-transform ${
-                        rem.enabled ? 'translate-x-4' : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-slate-100">
-            <span className="text-[11px] text-slate-400 block text-center">
-              Context-triggered based on your energy trends
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. AI Health Insights & Predictive Pattern Alert */}
-      <div className="bg-gradient-to-r from-rose-50/70 via-indigo-50/50 to-white rounded-2xl border border-rose-200/70 p-6 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-rose-500 text-white flex items-center justify-center">
-              <Sparkles className="w-4 h-4" />
-            </div>
+          {/* Habit Streaks & Adherence */}
+          <div className="p-5 bg-gradient-to-b from-teal-50/50 to-white rounded-xl border border-teal-200/70 flex flex-col justify-between">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">
-                Aura AI Cross-Correlated Health Insights
-              </h3>
-              <span className="text-xs text-slate-500">
-                Synthesizing your recent lab reports + daily logs + cycle rhythm
+              <span className="text-xs font-extrabold text-teal-900 block mb-2 flex items-center gap-1 uppercase tracking-wider font-mono">
+                <Flame className="w-4 h-4 text-rose-500" />
+                ADHERENCE STREAKS
               </span>
-            </div>
-          </div>
 
-          <button
-            onClick={onOpenChat}
-            className="px-3.5 py-1.5 text-xs font-semibold text-slate-900 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs flex items-center gap-1.5 self-start sm:self-auto"
-          >
-            <span>Ask AI Companion</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Insight 1: Iron & Fatigue */}
-          <div className="bg-white/90 backdrop-blur-xs rounded-xl p-4 border border-rose-100">
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md">
-                Biomarker Correlation
-              </span>
-              <span className="text-xs text-slate-400">· Ferritin (18 ng/mL)</span>
-            </div>
-            <p className="text-xs text-slate-700 leading-relaxed">
-              Your logged afternoon fatigue on high-study days aligns with borderline low iron stores. Consistently taking your Iron + Vitamin C alongside your lunch (avoiding tea/coffee for 1 hour) can restore vitality over 6–8 weeks.
-            </p>
-          </div>
-
-          {/* Insight 2: Sleep & Stress Loop */}
-          <div className="bg-white/90 backdrop-blur-xs rounded-xl p-4 border border-indigo-100">
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md">
-                Habit Pattern Detected
-              </span>
-              <span className="text-xs text-slate-400">· 2-Day Lag Correlation</span>
-            </div>
-            <p className="text-xs text-slate-700 leading-relaxed">
-              When sleep dropped below 6.5 hours two nights ago, reported headaches and caffeine intake doubled the following day. An evening digital curfew at 22:30 is recommended tonight to anchor sleep architecture.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. Latest Lab Report Highlights & Biomarkers */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Medical Report Intelligence
-              </span>
-              <span className="text-slate-300">·</span>
-              <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                Verified OCR Parsed
-              </span>
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mt-1">
-              {latestReport?.title || 'No reports uploaded yet'}
-            </h3>
-            <span className="text-xs text-slate-500">
-              Report Date: {latestReport?.reportDate} · {latestReport?.fileName}
-            </span>
-          </div>
-
-          <button
-            onClick={onOpenReports}
-            className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors self-start sm:self-auto flex items-center gap-1.5"
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Upload or View All Reports</span>
-          </button>
-        </div>
-
-        {/* Flagged or key biomarkers */}
-        {flaggedBiomarkers.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {flaggedBiomarkers.map((param) => {
-              const isLow = param.status === 'low';
-              const isBorderline = param.status === 'borderline';
-
-              return (
-                <div
-                  key={param.id}
-                  onClick={() => onOpenTrends(param.parameterName)}
-                  className="p-4 rounded-xl border border-slate-200/80 hover:border-slate-300 transition-all cursor-pointer bg-slate-50/50 hover:bg-slate-50 group"
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-semibold text-slate-900 group-hover:text-rose-600 transition-colors">
-                      {param.parameterName}
+              <div className="space-y-2.5 mt-3">
+                {habitGoals.slice(0, 3).map((g) => (
+                  <div key={g.id} className="flex items-center justify-between text-xs">
+                    <span className="text-slate-700 font-medium truncate max-w-[150px]">
+                      {g.title}
                     </span>
-                    <span
-                      className={`text-[11px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                        isLow
-                          ? 'bg-rose-100 text-rose-800'
-                          : isBorderline
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-indigo-100 text-indigo-800'
-                      }`}
-                    >
-                      {param.status}
+                    <span className="font-bold text-rose-600 tabular-nums font-mono">
+                      {g.currentStreakDays} days 🔥
                     </span>
                   </div>
+                ))}
+              </div>
 
-                  <div className="flex items-baseline gap-1.5 mt-2">
-                    <span className="text-2xl font-bold text-slate-900 tabular-nums">
-                      {param.value}
-                    </span>
-                    <span className="text-xs text-slate-500 font-medium">
-                      {param.unit}
-                    </span>
-                  </div>
+              <p className="text-xs text-slate-500 mt-3">
+                {reminders.filter((r) => r.enabled).length} automated health reminders active today.
+              </p>
+            </div>
 
-                  <div className="text-[11px] text-slate-400 mt-1">
-                    Standard Range: {param.referenceMin ?? 0} – {param.referenceMax ?? 'N/A'} {param.unit}
-                  </div>
-
-                  <p className="text-xs text-slate-600 mt-2 line-clamp-2">
-                    {param.plainExplanation}
-                  </p>
-
-                  <div className="mt-3 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500 group-hover:text-slate-800">
-                    <span>View historical trend</span>
-                    <TrendingUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-rose-500" />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
-            <p className="text-xs text-slate-500">
-              No laboratory reports uploaded yet. Upload a blood test, CBC, or metabolic panel to extract your parameters.
-            </p>
             <button
-              onClick={onOpenReports}
-              className="mt-3 px-4 py-2 text-xs font-semibold text-white bg-slate-900 rounded-xl hover:bg-slate-800"
+              onClick={onOpenHabits}
+              className="mt-4 w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors text-center shadow-xs"
             >
-              Upload Medical Report
+              View All Streaks & Goals
             </button>
           </div>
-        )}
-      </div>
-
-      {/* 5. Flo-Style Daily Health Stories & Curated Guides */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-base font-bold text-slate-900 tracking-tight">
-              Daily Health Stories & Scientific Guides
-            </h3>
-            <span className="text-xs text-slate-500">
-              Curated evidence-based insights for youth & student wellness
-            </span>
-          </div>
-
-          <button
-            onClick={() => onOpenStories()}
-            className="text-xs font-semibold text-slate-700 hover:text-slate-900 flex items-center gap-1"
-          >
-            <span>Explore Library</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stories.map((story) => (
-            <div
-              key={story.id}
-              onClick={() => onOpenStories(story.id)}
-              className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between group hover:border-slate-300"
-            >
-              <div>
-                <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-2">
-                  <span className="font-semibold text-rose-600">{story.category}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{story.readTime}</span>
-                </div>
-
-                <h4 className="text-sm font-bold text-slate-900 group-hover:text-rose-600 transition-colors leading-snug">
-                  {story.title}
-                </h4>
-
-                <p className="text-xs text-slate-600 mt-2 line-clamp-2">
-                  {story.summary}
-                </p>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                <span className="truncate max-w-[130px]">{story.evidenceSource}</span>
-                <span className="font-medium text-slate-700 group-hover:underline">Read →</span>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </div>

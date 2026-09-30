@@ -1,5 +1,3 @@
-import { HealthStory } from '../types/index.ts';
-
 export interface BiomarkerKnowledge {
   parameterName: string;
   category: 'hematology' | 'vitamins_minerals' | 'endocrine' | 'lipids' | 'metabolic';
@@ -30,7 +28,7 @@ export const BIOMARKER_KNOWLEDGE: Record<string, BiomarkerKnowledge> = {
     lifestyleTips: [
       'Pair plant-based iron foods (lentils, spinach, tofu) with Vitamin C (citrus, bell peppers) to boost absorption by up to 300%.',
       'Avoid drinking coffee or tea within 1 hour of iron-rich meals (tannins block iron absorption).',
-      'If menstruating heavily, discuss ferritin & iron stores with your clinician.'
+      'If menstruating heavily or training intensely, discuss ferritin & iron stores with your clinician.'
     ],
     verifiedSources: 'World Health Organization (WHO) Nutritional Anemia Guidelines, NIH MedlinePlus'
   },
@@ -93,7 +91,7 @@ export const BIOMARKER_KNOWLEDGE: Record<string, BiomarkerKnowledge> = {
     defaultMin: 0.45,
     defaultMax: 4.5,
     plainMeaning: 'The master pituitary signal directing your thyroid gland how quickly or slowly to run your metabolism, body temperature, and heart rate.',
-    youthRelevance: 'Subclinical hypothyroidism is common in young adults, causing cold sensitivity, unprovoked weight gain, irregular menstrual cycles, and morning sluggishness.',
+    youthRelevance: 'Subclinical hypothyroidism is common in young adults, causing cold sensitivity, unprovoked weight gain, irregular sleepiness, and morning sluggishness.',
     commonLowReasons: 'Overactive thyroid (hyperthyroidism), intense acute stress.',
     commonHighReasons: 'Underactive thyroid (hypothyroidism), Hashimoto autoimmune thyroiditis, chronic severe caloric restriction.',
     lifestyleTips: [
@@ -110,7 +108,7 @@ export const BIOMARKER_KNOWLEDGE: Record<string, BiomarkerKnowledge> = {
     defaultMin: 70,
     defaultMax: 99,
     plainMeaning: 'The level of immediate sugar in your bloodstream after an 8–12 hour fast.',
-    youthRelevance: 'Helps detect early insulin resistance often paired with PCOS, irregular sleep schedules, sweet cravings, and energy crashes after high-carb meals.',
+    youthRelevance: 'Helps detect early insulin resistance often paired with irregular sleep schedules, sweet cravings, and energy crashes after high-carb meals.',
     commonLowReasons: 'Excessive fasting, reactive hypoglycemia after refined sugar spikes, extreme endurance exercise.',
     commonHighReasons: 'Pre-diabetes, late-night high sugar binge, high acute cortisol from exam stress.',
     lifestyleTips: [
@@ -137,87 +135,3 @@ export const BIOMARKER_KNOWLEDGE: Record<string, BiomarkerKnowledge> = {
     verifiedSources: 'American Heart Association (AHA) Prevention Guidelines'
   }
 };
-
-export const HEALTH_STORIES: HealthStory[] = [
-  {
-    id: 'story-1',
-    title: 'The Student Fatigue Puzzle: Why Sleep Isn’t Always the Fix',
-    category: 'Fatigue & Blood Health',
-    readTime: '3 min read',
-    summary: 'Sleeping 9 hours but still waking up exhausted? Uncover the subtle trio: Ferritin, Vitamin D, and Cortisol rhythms.',
-    evidenceSource: 'British Medical Journal & NIH Clinical Sleep Medicine',
-    highlightMetric: 'Ferritin & Vitamin D',
-    tags: ['Fatigue', 'Iron Deficiency', 'Student Wellness'],
-    contentMarkdown: `
-### Beyond Just "Tiredness"
-It is common for college students and young professionals to assume that exhaustion is simply a lack of hours in bed. Yet clinical lab data reveals that over 38% of young adults with persistent brain fog actually have **subclinical iron deficiency** (Serum Ferritin < 30 ng/mL) or **Vitamin D insufficiency** (< 25 ng/mL).
-
-#### What to Check:
-1. **Serum Ferritin**: Tests your iron storage tank. Even if your standard Hemoglobin looks normal, empty iron reserves prevent your cells' mitochondria from producing ATP (energy).
-2. **Thyroid Stimulating Hormone (TSH)**: A sluggish thyroid can simulate burnout and clinical depression.
-3. **Electrolyte & Hydration Status**: Mild 2% cellular dehydration impairs cognitive focus by 15%.
-
-#### Actionable Micro-Habit:
-If you feel tired upon waking, get 5–10 minutes of direct morning sunlight into your eyes before checking your phone, and drink 500ml of water with a pinch of sea salt.
-    `
-  },
-  {
-    id: 'story-2',
-    title: 'Hormones & Energy: Syncing Your Workouts with Your Cycle',
-    category: 'Cycle & Hormones',
-    readTime: '4 min read',
-    summary: 'How estrogen and progesterone shift your metabolism, pain tolerance, and recovery across the 4 phases.',
-    evidenceSource: 'American College of Obstetricians and Gynecologists (ACOG)',
-    highlightMetric: 'Follicular vs Luteal',
-    tags: ['Cycle Syncing', 'Estrogen', 'Workouts', 'Flo Inspired'],
-    contentMarkdown: `
-### Understanding Your Infradian Rhythm
-Just as everyone has a 24-hour circadian rhythm, cycling individuals have a ~28-day infradian rhythm that shifts metabolism, resting temperature, and neurotransmitters.
-
-#### Phase by Phase:
-- **Phase 1: Menstrual (Days 1–5)**: Hormones are at their lowest baseline. Focus on gentle movement (walking, yin yoga), iron-rich soups, and nervous system rest.
-- **Phase 2: Follicular (Days 6–12)**: Estrogen climbs steadily. Brain plasticity, social energy, and insulin sensitivity are highest. Best time for challenging projects and HIIT/strength workouts.
-- **Phase 3: Ovulation (Days 13–15)**: Peak estrogen and mild testosterone boost. Peak endurance, elevated confidence, but joint laxity increases (warm up knees/ankles thoroughly).
-- **Phase 4: Luteal (Days 16–28)**: Progesterone dominates. Resting metabolic rate increases by 100–300 calories/day, but cortisol sensitivity is higher. Favor steady-state cardio, complex carbs, and magnesium.
-    `
-  },
-  {
-    id: 'story-3',
-    title: 'Screen-Induced Brain Drain: The 20-20-20 Rule for Focus',
-    category: 'Sleep & Mind',
-    readTime: '2 min read',
-    summary: 'Combat digital eye strain, blue light melatonin suppression, and desk posture tension during exam or work sprints.',
-    evidenceSource: 'American Academy of Ophthalmology',
-    highlightMetric: 'Melatonin & Circadian',
-    tags: ['Screen Time', 'Deep Work', 'Sleep'],
-    contentMarkdown: `
-### Digital Eye Strain & Evening Melatonin
-Staring at laptops and phones reduces our blink rate from ~18 times per minute to just 5. This causes dry cornea, tension headaches, and sympathetic nervous system overdrive.
-
-#### The 20-20-20 Protocol:
-Every **20 minutes**, look away at an object at least **20 feet away** for at least **20 seconds**. This allows the ciliary eye muscles to relax and resets your autonomic stress response.
-
-#### Nighttime Digital Curfew:
-Blue light from screens directly suppresses melatonin release by up to 85%, shifting your circadian clock by 1.5 hours later. Switch screens to night-shift amber mode at sundown.
-    `
-  },
-  {
-    id: 'story-4',
-    title: 'Clear Skin from the Inside: The Gut-Skin Connection',
-    category: 'Skin & Gut',
-    readTime: '3 min read',
-    summary: 'Why sudden adult breakouts often mirror late-night sugar, dairy sensitivities, or elevated cortisol.',
-    evidenceSource: 'Journal of the American Academy of Dermatology',
-    highlightMetric: 'Insulin & Cortisol',
-    tags: ['Acne', 'Gut Health', 'Diet'],
-    contentMarkdown: `
-### The Hormonal-Gut Axis
-Acne in young adults (ages 18–35) is rarely just about topical cleanliness. High glycemic index meals trigger sharp spikes in insulin and IGF-1 (Insulin-like Growth Factor 1), stimulating excess sebum production and pore clogging.
-
-#### Key Gut Factors:
-- **Refined Sugar & Whey Protein**: Both trigger substantial insulin spikes that activate androgen pathways in skin sebocytes.
-- **Sleep Quality**: Poor sleep elevates nocturnal cortisol, which degrades skin barrier integrity and amplifies inflammatory redness.
-- **Zinc & Omega-3**: Anti-inflammatory compounds that calm cystic acne.
-    `
-  }
-];

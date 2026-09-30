@@ -1,54 +1,63 @@
-import { UserProfile, DailySymptomLog, MedicalReport, HabitReminder, DailyWellnessPlan } from '../types/index.ts';
+import {
+  UserProfile,
+  DailyHealthUpdate,
+  MedicalReport,
+  HabitGoal,
+  HabitReminder
+} from '../types/index.ts';
 
 export const SEED_PROFILE: UserProfile = {
-  id: 'usr_maya_22',
-  email: 'maya.student@aurahealth.internal',
-  name: 'Maya Chen',
-  age: 21,
+  id: 'usr_alex_22',
+  email: 'alex.wellness@aurahealth.internal',
+  name: 'Alex Rivera',
+  age: 22,
   gender: 'female',
-  heightCm: 165,
-  weightKg: 58,
+  heightCm: 168,
+  weightKg: 62,
   lifestyle: 'student',
-  trackingMode: 'cycle_and_wellness',
-  targetSleepHours: 8,
+  targetSleepHours: 8.0,
   targetWaterMl: 2500,
-  cycleLengthDays: 29,
-  periodLengthDays: 5,
-  lastPeriodStartDate: '2026-09-16', // Cycle Day 14 today (Ovulation/Follicular transition)
-  isTryingToConceive: false,
+  targetActivityMins: 35,
+  bloodPressureSystolic: 118,
+  bloodPressureDiastolic: 76,
+  restingHeartRate: 71,
+  bloodGroup: 'O+',
+  existingConditions: ['Mild Iron Deficiency', 'Indoor Vitamin D Insufficiency'],
+  familyHistory: ['Type 2 Diabetes (Grandparent)', 'Hypertension (Father)'],
   anonymousMode: false
 };
 
 export const SEED_REPORTS: MedicalReport[] = [
   {
-    id: 'rep_spring_2026',
-    userId: 'usr_maya_22',
-    title: 'Comprehensive Youth Wellness & CBC Panel',
+    id: 'rep_sep_2026',
+    userId: 'usr_alex_22',
+    title: 'Comprehensive Student Health & Complete Blood Count (CBC)',
     reportType: 'complete_blood_count',
-    reportDate: '2026-09-08',
-    fileName: 'Quest_Diagnostics_Student_Wellness_Sept2026.pdf',
+    reportDate: '2026-09-12',
+    fileName: 'Quest_Diagnostics_Annual_Screening_Sep2026.pdf',
     fileSize: 245000,
     status: 'completed',
-    summary: 'Mild iron deficiency pattern with borderline low hemoglobin (11.8 g/dL) and low serum ferritin (18 ng/mL). Vitamin D is insufficient at 24 ng/mL, consistent with indoor university study routines.',
+    summary: 'Biomarkers reflect overall stable metabolic and organ function, with early signs of nutritional iron deficiency: borderline low Hemoglobin (11.8 g/dL) and depleted Serum Ferritin reserves (18 ng/mL). Vitamin D is insufficient at 24.2 ng/mL.',
     parameters: [
       {
         id: 'p1',
-        reportId: 'rep_spring_2026',
-        parameterName: 'Hemoglobin',
+        reportId: 'rep_sep_2026',
+        parameterName: 'Hemoglobin (Hb)',
         category: 'hematology',
         value: 11.8,
         unit: 'g/dL',
         referenceMin: 12.0,
         referenceMax: 15.5,
         status: 'low',
-        plainExplanation: 'Your oxygen-carrying protein is slightly below the normal range, explaining why afternoon stairs or lecture focus can feel draining.',
-        youthRelevance: 'Common in young adults with regular menstrual cycles or low dietary iron.',
-        reportDate: '2026-09-08',
+        plainExplanation: 'The primary oxygen-carrying protein in red blood cells. Slightly below normal threshold, explaining afternoon study fatigue and mild exertion breathlessness.',
+        youthRelevance: 'Common in young adults and students with irregular meal schedules or high training demands.',
+        associatedConditions: ['Iron Deficiency & Anemia'],
+        reportDate: '2026-09-12',
         confidenceScore: 0.98
       },
       {
         id: 'p2',
-        reportId: 'rep_spring_2026',
+        reportId: 'rep_sep_2026',
         parameterName: 'Serum Ferritin',
         category: 'vitamins_minerals',
         value: 18,
@@ -56,14 +65,15 @@ export const SEED_REPORTS: MedicalReport[] = [
         referenceMin: 20,
         referenceMax: 150,
         status: 'low',
-        plainExplanation: 'Your deep iron storage reserve is running low, even before full anemia develops.',
-        youthRelevance: 'A primary cause of student fatigue, fragile nails, and post-study exhaustion.',
-        reportDate: '2026-09-08',
-        confidenceScore: 0.96
+        plainExplanation: 'Your body’s deep iron storage depot. When low, your cells have trouble sustaining cellular ATP energy production.',
+        youthRelevance: 'Key contributor to student brain fog, brittle nails, and post-workout exhaustion.',
+        associatedConditions: ['Iron Deficiency & Anemia'],
+        reportDate: '2026-09-12',
+        confidenceScore: 0.97
       },
       {
         id: 'p3',
-        reportId: 'rep_spring_2026',
+        reportId: 'rep_sep_2026',
         parameterName: '25-OH Vitamin D',
         category: 'vitamins_minerals',
         value: 24.2,
@@ -71,14 +81,15 @@ export const SEED_REPORTS: MedicalReport[] = [
         referenceMin: 30.0,
         referenceMax: 100.0,
         status: 'low',
-        plainExplanation: 'Below the optimal threshold (30–60 ng/mL). Can contribute to sluggish mornings and lower immunity.',
-        youthRelevance: 'Very common during semesters with heavy indoor study.',
-        reportDate: '2026-09-08',
-        confidenceScore: 0.97
+        plainExplanation: 'Essential hormone precursor made in skin upon sun exposure. Under 30 ng/mL weakens immunity and mood regulation.',
+        youthRelevance: 'Very common in students and desk workers who study indoors under artificial lighting.',
+        associatedConditions: ['Vitamin D & B12 Deficiencies'],
+        reportDate: '2026-09-12',
+        confidenceScore: 0.99
       },
       {
         id: 'p4',
-        reportId: 'rep_spring_2026',
+        reportId: 'rep_sep_2026',
         parameterName: 'Fasting Blood Glucose',
         category: 'metabolic',
         value: 86,
@@ -86,63 +97,85 @@ export const SEED_REPORTS: MedicalReport[] = [
         referenceMin: 70,
         referenceMax: 99,
         status: 'optimal',
-        plainExplanation: 'Optimal blood sugar regulation after overnight fast.',
-        youthRelevance: 'Healthy insulin sensitivity baseline.',
-        reportDate: '2026-09-08',
+        plainExplanation: 'Resting morning blood glucose is in the optimal healthy range.',
+        youthRelevance: 'Rules out early pre-diabetes or fasting glucose dysregulation.',
+        associatedConditions: ['Pre-Diabetes & Insulin Resistance'],
+        reportDate: '2026-09-12',
         confidenceScore: 0.99
       },
       {
         id: 'p5',
-        reportId: 'rep_spring_2026',
-        parameterName: 'TSH (Thyroid)',
+        reportId: 'rep_sep_2026',
+        parameterName: 'TSH (Thyroid Stimulating Hormone)',
         category: 'endocrine',
         value: 1.85,
         unit: 'uIU/mL',
         referenceMin: 0.45,
         referenceMax: 4.50,
         status: 'optimal',
-        plainExplanation: 'Your thyroid metabolic master switch is in the sweet spot for young adults.',
-        youthRelevance: 'Rules out primary thyroid slowdown as the cause of tiredness.',
-        reportDate: '2026-09-08',
+        plainExplanation: 'Pituitary gland thyroid stimulation signal is in the optimal sweet spot (1.0 - 2.5 uIU/mL).',
+        youthRelevance: 'Confirms healthy baseline metabolic rate and rules out subclinical hypothyroidism.',
+        associatedConditions: ['Thyroid Disorders (Hypothyroidism & Hyperthyroidism)'],
+        reportDate: '2026-09-12',
         confidenceScore: 0.98
+      },
+      {
+        id: 'p6',
+        reportId: 'rep_sep_2026',
+        parameterName: 'LDL-C (Low-Density Lipoprotein)',
+        category: 'lipids',
+        value: 94,
+        unit: 'mg/dL',
+        referenceMin: 0,
+        referenceMax: 100,
+        status: 'optimal',
+        plainExplanation: 'Optimal cardiovascular lipid profile reading below the 100 mg/dL target.',
+        youthRelevance: 'Reflects healthy arterial protection and cardiovascular baseline.',
+        associatedConditions: ['Dyslipidemia (High Cholesterol & Triglycerides)'],
+        reportDate: '2026-09-12',
+        confidenceScore: 0.96
       }
     ],
     doctorDiscussionPoints: [
-      'Ask whether an elemental iron supplement or dietary iron increase is recommended for ferritin (18 ng/mL).',
-      'Discuss Vitamin D3 supplementation (e.g. 1000-2000 IU/day) during heavy indoor semester months.',
-      'Re-check CBC and Ferritin in 3-4 months to monitor recovery.'
+      'Discuss gentle elemental oral iron supplementation (e.g. Iron bisglycinate) with Vitamin C for low ferritin (18 ng/mL).',
+      'Review daily Vitamin D3 maintenance dose (1,000–2,000 IU/day) during heavy indoor semester months.',
+      'Schedule a routine re-check in 3–4 months to monitor iron restoration.'
     ],
-    createdAt: '2026-09-08T10:14:00Z'
+    preventiveTakeaways: [
+      'Do not consume tea, coffee, or calcium antacids within 60 minutes of iron-rich meals.',
+      'Spend 15 minutes in natural midday sunlight during lecture/work breaks.'
+    ],
+    createdAt: '2026-09-12T09:30:00Z'
   },
   {
-    id: 'rep_prior_2026',
-    userId: 'usr_maya_22',
+    id: 'rep_apr_2026',
+    userId: 'usr_alex_22',
     title: 'Routine Health Checkup & Blood Count',
     reportType: 'complete_blood_count',
-    reportDate: '2026-04-12',
-    fileName: 'Campus_Health_Lab_April2026.pdf',
+    reportDate: '2026-04-18',
+    fileName: 'Campus_Clinic_Routine_Spring2026.pdf',
     fileSize: 189000,
     status: 'completed',
-    summary: 'Previous baseline showing hemoglobin was 12.4 g/dL and Vitamin D was 28 ng/mL.',
+    summary: 'Spring baseline showing Hemoglobin at 12.4 g/dL and Serum Ferritin at 26 ng/mL. Demonstrates a gradual summer decline in iron reserves.',
     parameters: [
       {
         id: 'p1_prior',
-        reportId: 'rep_prior_2026',
-        parameterName: 'Hemoglobin',
+        reportId: 'rep_apr_2026',
+        parameterName: 'Hemoglobin (Hb)',
         category: 'hematology',
         value: 12.4,
         unit: 'g/dL',
         referenceMin: 12.0,
         referenceMax: 15.5,
         status: 'optimal',
-        plainExplanation: 'Was within normal limits in April.',
-        youthRelevance: 'Shows a slight downward trend over summer semester.',
-        reportDate: '2026-04-12',
-        confidenceScore: 0.96
+        plainExplanation: 'Was within the normal range during the spring semester.',
+        youthRelevance: 'Tracks a -0.6 g/dL decrease compared to September.',
+        reportDate: '2026-04-18',
+        confidenceScore: 0.95
       },
       {
         id: 'p2_prior',
-        reportId: 'rep_prior_2026',
+        reportId: 'rep_apr_2026',
         parameterName: 'Serum Ferritin',
         category: 'vitamins_minerals',
         value: 26,
@@ -150,14 +183,14 @@ export const SEED_REPORTS: MedicalReport[] = [
         referenceMin: 20,
         referenceMax: 150,
         status: 'borderline',
-        plainExplanation: 'Was borderline in April and has dipped to 18 ng/mL currently.',
-        youthRelevance: 'Demonstrates gradual depletion of iron reserves.',
-        reportDate: '2026-04-12',
+        plainExplanation: 'Was borderline (26 ng/mL) in spring and has continued downward to 18 ng/mL currently.',
+        youthRelevance: 'Proves a chronic depletion pattern rather than an acute one-day dip.',
+        reportDate: '2026-04-18',
         confidenceScore: 0.94
       },
       {
         id: 'p3_prior',
-        reportId: 'rep_prior_2026',
+        reportId: 'rep_apr_2026',
         parameterName: '25-OH Vitamin D',
         category: 'vitamins_minerals',
         value: 28.5,
@@ -165,202 +198,186 @@ export const SEED_REPORTS: MedicalReport[] = [
         referenceMin: 30.0,
         referenceMax: 100.0,
         status: 'borderline',
-        plainExplanation: 'Borderline range.',
-        youthRelevance: 'Has remained under 30 ng/mL across both spring and fall.',
-        reportDate: '2026-04-12',
+        plainExplanation: 'Has remained in the sub-optimal 24–28 ng/mL band across multiple seasons.',
+        youthRelevance: 'Confirms continuous indoor study exposure.',
+        reportDate: '2026-04-18',
         confidenceScore: 0.95
       }
     ],
     doctorDiscussionPoints: [
-      'Compare previous iron values against current levels.'
+      'Compare previous spring iron values against autumn readings.'
     ],
-    createdAt: '2026-04-12T14:30:00Z'
+    preventiveTakeaways: [
+      'Track diet consistency and consider proactive winter supplementation.'
+    ],
+    createdAt: '2026-04-18T11:00:00Z'
   }
 ];
 
-export const SEED_SYMPTOM_LOGS: DailySymptomLog[] = [
+export const SEED_DAILY_UPDATES: DailyHealthUpdate[] = [
   {
     id: 'log_today',
-    userId: 'usr_maya_22',
+    userId: 'usr_alex_22',
     date: '2026-09-29',
-    cramps: 'none',
-    headache: false,
-    bloating: false,
-    breastTenderness: false,
-    fatigueLevel: 2,
-    skinCondition: 'clear',
-    digestion: 'normal',
-    mood: 'focused',
+    restingHeartRate: 71,
+    bloodPressure: '118/76',
+    weightKg: 62.1,
+    energyLevel: 4,
     stressLevel: 2,
-    mentalFocus: 4,
-    sleepHours: 7.5,
+    mood: 'productive',
+    waterGlasses: 7,
+    sleepHours: 7.8,
     sleepQuality: 4,
-    waterGlasses: 8,
-    exerciseMinutes: 35,
-    exerciseType: 'Brisk walk & Pilates',
-    caffeineCups: 1,
+    activityMinutes: 35,
+    activityType: 'Brisk campus walk & bodyweight workout',
+    screenTimeHours: 5.4,
+    nutritionQuality: 'healthy_balanced',
     supplementsTaken: ['Iron + Vitamin C', 'Vitamin D3 (2000 IU)'],
-    periodFlow: 'none',
-    notes: 'Energy felt much higher today! Got midday sunshine on the campus lawn.'
+    symptomsReported: ['Mild Neck Tension'],
+    notes: 'Energy felt much better today after getting 15 mins of midday sun on the campus lawn.'
   },
   {
     id: 'log_yesterday',
-    userId: 'usr_maya_22',
+    userId: 'usr_alex_22',
     date: '2026-09-28',
-    cramps: 'none',
-    headache: false,
-    bloating: true,
-    breastTenderness: false,
-    fatigueLevel: 3,
-    skinCondition: 'breakouts',
-    digestion: 'bloated',
-    mood: 'stressed',
+    restingHeartRate: 75,
+    bloodPressure: '122/80',
+    weightKg: 62.3,
+    energyLevel: 2,
     stressLevel: 4,
-    mentalFocus: 3,
-    sleepHours: 6.2,
+    mood: 'stressed',
+    waterGlasses: 4,
+    sleepHours: 6.1,
     sleepQuality: 3,
-    waterGlasses: 5,
-    exerciseMinutes: 20,
-    exerciseType: 'Light yoga',
-    caffeineCups: 3,
+    activityMinutes: 15,
+    activityType: 'Stretching',
+    screenTimeHours: 8.5,
+    nutritionQuality: 'junk_fast_food',
     supplementsTaken: ['Vitamin D3 (2000 IU)'],
-    periodFlow: 'none',
-    notes: 'Exam prep until midnight, drank too much coffee.'
+    symptomsReported: ['Headache', 'Brain Fog', 'Eye Strain'],
+    notes: 'Exam preparation sprint until midnight. Too much coffee and skipped dinner.'
   },
   {
     id: 'log_2days_ago',
-    userId: 'usr_maya_22',
+    userId: 'usr_alex_22',
     date: '2026-09-27',
-    cramps: 'none',
-    headache: true,
-    bloating: false,
-    breastTenderness: false,
-    fatigueLevel: 4,
-    skinCondition: 'dry',
-    digestion: 'normal',
-    mood: 'low',
+    restingHeartRate: 73,
+    bloodPressure: '120/78',
+    weightKg: 62.0,
+    energyLevel: 3,
     stressLevel: 3,
-    mentalFocus: 2,
-    sleepHours: 5.8,
-    sleepQuality: 2,
-    waterGlasses: 4,
-    exerciseMinutes: 0,
-    caffeineCups: 2,
-    supplementsTaken: [],
-    periodFlow: 'none',
-    notes: 'Afternoon headache, screen time was over 9 hours.'
+    mood: 'normal',
+    waterGlasses: 6,
+    sleepHours: 7.0,
+    sleepQuality: 3,
+    activityMinutes: 30,
+    activityType: 'Cycling',
+    screenTimeHours: 6.8,
+    nutritionQuality: 'moderate',
+    supplementsTaken: ['Iron + Vitamin C'],
+    symptomsReported: [],
+    notes: 'Standard lecture day. Library focus was steady.'
+  }
+];
+
+export const SEED_HABIT_GOALS: HabitGoal[] = [
+  {
+    id: 'goal_water',
+    userId: 'usr_alex_22',
+    title: 'Daily Hydration (2,500 ml)',
+    category: 'water',
+    targetValue: 10, // 10 glasses = 2500ml
+    currentValue: 7,
+    unit: 'glasses',
+    currentStreakDays: 5,
+    bestStreakDays: 14,
+    completedToday: false
   },
   {
-    id: 'log_3days_ago',
-    userId: 'usr_maya_22',
-    date: '2026-09-26',
-    cramps: 'none',
-    headache: false,
-    bloating: false,
-    breastTenderness: false,
-    fatigueLevel: 2,
-    skinCondition: 'clear',
-    digestion: 'normal',
-    mood: 'energetic',
-    stressLevel: 2,
-    mentalFocus: 4,
-    sleepHours: 8.1,
-    sleepQuality: 5,
-    waterGlasses: 9,
-    exerciseMinutes: 45,
-    exerciseType: 'Cycling',
-    caffeineCups: 1,
-    supplementsTaken: ['Iron + Vitamin C', 'Vitamin D3 (2000 IU)'],
-    periodFlow: 'none'
+    id: 'goal_sleep',
+    userId: 'usr_alex_22',
+    title: 'Sleep Duration (8 Hours)',
+    category: 'sleep',
+    targetValue: 8.0,
+    currentValue: 7.8,
+    unit: 'hours',
+    currentStreakDays: 4,
+    bestStreakDays: 9,
+    completedToday: true
+  },
+  {
+    id: 'goal_activity',
+    userId: 'usr_alex_22',
+    title: 'Physical Activity & Movement',
+    category: 'activity',
+    targetValue: 35,
+    currentValue: 35,
+    unit: 'minutes',
+    currentStreakDays: 3,
+    bestStreakDays: 12,
+    completedToday: true
+  },
+  {
+    id: 'goal_screen',
+    userId: 'usr_alex_22',
+    title: 'Digital Screen Curfew (< 6 Hours)',
+    category: 'screen_time',
+    targetValue: 6.0,
+    currentValue: 5.4,
+    unit: 'hours',
+    currentStreakDays: 2,
+    bestStreakDays: 6,
+    completedToday: true
+  },
+  {
+    id: 'goal_supplements',
+    userId: 'usr_alex_22',
+    title: 'Iron & Vitamin D Routine',
+    category: 'medication',
+    targetValue: 2,
+    currentValue: 2,
+    unit: 'doses',
+    currentStreakDays: 8,
+    bestStreakDays: 21,
+    completedToday: true
   }
 ];
 
 export const SEED_REMINDERS: HabitReminder[] = [
   {
     id: 'rem_1',
-    userId: 'usr_maya_22',
-    title: 'Hydration Reset (Glass 3 of 8)',
+    userId: 'usr_alex_22',
+    title: 'Mid-Morning Hydration (Glass 3 of 10)',
     category: 'water',
-    time: '11:00',
+    time: '10:30',
     enabled: true,
     frequency: 'daily'
   },
   {
     id: 'rem_2',
-    userId: 'usr_maya_22',
-    title: 'Iron + Vitamin C with lunch (No tea/coffee)',
-    category: 'supplement',
+    userId: 'usr_alex_22',
+    title: 'Lunch Iron + Vitamin C (No tea/coffee for 1hr)',
+    category: 'medication',
     time: '13:00',
     enabled: true,
     frequency: 'daily'
   },
   {
     id: 'rem_3',
-    userId: 'usr_maya_22',
+    userId: 'usr_alex_22',
     title: '20-20-20 Eye & Posture Break',
-    category: 'movement',
+    category: 'eye_break',
     time: '15:30',
     enabled: true,
     frequency: 'daily'
   },
   {
     id: 'rem_4',
-    userId: 'usr_maya_22',
-    title: 'Evening Digital Curfew & Warm Tea',
+    userId: 'usr_alex_22',
+    title: 'Nocturnal Screen Amber Shift & Wind-down',
     category: 'sleep',
-    time: '22:30',
+    time: '22:15',
     enabled: true,
     frequency: 'daily'
   }
 ];
-
-export const SEED_WELLNESS_PLAN: DailyWellnessPlan = {
-  id: 'plan_today',
-  userId: 'usr_maya_22',
-  date: '2026-09-29',
-  focusTheme: 'Ovulation/Estrogen Window Energy & Iron Replenishment',
-  circadianAdvice: 'Estrogen is near its peak today (Cycle Day 14). Your brain has high verbal fluency and stamina. Capitalize on focus early, and protect iron absorption at midday.',
-  routines: [
-    {
-      id: 'r_1',
-      timeSlot: 'morning',
-      title: '500ml Mineral Water & 10 Min Natural Light',
-      description: 'Anchor cortisol awakening response. Avoid looking at phone notifications during the first 10 minutes.',
-      iconName: 'Sun',
-      completed: true
-    },
-    {
-      id: 'r_2',
-      timeSlot: 'morning',
-      title: 'Deep Focus Block (Study / Creative Work)',
-      description: 'Prefrontal cortex focus is highest between 9:00 AM and 11:30 AM.',
-      iconName: 'Brain',
-      completed: true
-    },
-    {
-      id: 'r_3',
-      timeSlot: 'midday',
-      title: 'Iron-Rich Lunch + Citrus Bell Peppers',
-      description: 'Lentils/quinoa or grilled protein paired with vitamin C. Wait 60 mins before having caffeine.',
-      iconName: 'Salad',
-      completed: false
-    },
-    {
-      id: 'r_4',
-      timeSlot: 'evening',
-      title: 'Movement & Posture Realignment (35 Mins)',
-      description: 'Brisk walk, yoga, or Pilates to open thoracic spine after sitting at desk.',
-      iconName: 'Activity',
-      completed: false
-    },
-    {
-      id: 'r_5',
-      timeSlot: 'night',
-      title: 'Magnesium + Amber Night Screen Shift',
-      description: 'Warm shower and 15 mins reading to signal melatonin secretion for restorative deep sleep.',
-      iconName: 'Moon',
-      completed: false
-    }
-  ],
-  biomarkerTip: 'Remember: Your Ferritin was 18 ng/mL. Consistent iron intake paired with Vitamin C over 6–8 weeks is key to replenishing bone marrow stores.'
-};

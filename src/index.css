@@ -6,4 +6,43 @@
     user-select: none;
     transition: filter 0.2s ease-in-out;
   }
+
+  .medical-card-glow {
+    box-shadow: 0 4px 20px -2px rgba(13, 148, 136, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  }
+
+  .medical-card-hover {
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .medical-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px -4px rgba(13, 148, 136, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
+  }
+}
+
+@keyframes ecgPulse {
+  0% { stroke-dashoffset: 400; }
+  50% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -400; }
+}
+
+.animate-ecg {
+  stroke-dasharray: 400;
+  animation: ecgPulse 4s linear infinite;
+}
+
+/* Custom scrollbar for clinical sleekness */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

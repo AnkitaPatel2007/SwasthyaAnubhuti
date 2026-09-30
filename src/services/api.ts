@@ -5,7 +5,8 @@ import {
   HabitGoal,
   HabitReminder,
   ChatMessage,
-  DiseaseCondition
+  DiseaseCondition,
+  SpecialFeature
 } from '../types/index.ts';
 
 const TOKEN_KEY = 'aurahealth_jwt_token';
@@ -61,6 +62,15 @@ export const apiClient = {
     const data = await this.request<{ token: string; profile: UserProfile }>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password, name }),
+    });
+    this.setToken(data.token);
+    return data;
+  },
+
+  async loginWithGoogle(email: string, name?: string, avatarUrl?: string, googleId?: string): Promise<{ token: string; profile: UserProfile }> {
+    const data = await this.request<{ token: string; profile: UserProfile }>('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ email, name, avatarUrl, googleId }),
     });
     this.setToken(data.token);
     return data;
@@ -159,6 +169,25 @@ export const apiClient = {
   async deleteReminder(id: string): Promise<HabitReminder[]> {
     return this.request<HabitReminder[]>(`/api/reminders/${id}`, {
       method: 'DELETE',
+    });
+  },
+
+  // Arogya Streak Points & Special Features
+  async getSpecialFeatures(): Promise<SpecialFeature[]> {
+    return this.request<SpecialFeature[]>('/api/points/features');
+  },
+
+  async redeemFeature(featureId: string, pointCost: number): Promise<{ profile: UserProfile; success: boolean }> {
+    return this.request<{ profile: UserProfile; success: boolean }>('/api/points/redeem', {
+      method: 'POST',
+      body: JSON.stringify({ featureId, pointCost }),
+    });
+  },
+
+  async awardStreakPoints(points: number): Promise<{ profile: UserProfile; success: boolean }> {
+    return this.request<{ profile: UserProfile; success: boolean }>('/api/points/award', {
+      method: 'POST',
+      body: JSON.stringify({ points }),
     });
   },
 

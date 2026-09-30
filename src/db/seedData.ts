@@ -24,6 +24,8 @@ export const SEED_PROFILE: UserProfile = {
   bloodGroup: 'O+',
   existingConditions: ['Mild Iron Deficiency', 'Indoor Vitamin D Insufficiency'],
   familyHistory: ['Type 2 Diabetes (Grandparent)', 'Hypertension (Father)'],
+  healthPoints: 240, // Points earned from 5-day habit streaks
+  unlockedFeatures: [],
   anonymousMode: false
 };
 

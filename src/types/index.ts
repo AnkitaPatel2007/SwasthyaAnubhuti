@@ -19,8 +19,20 @@ export interface UserProfile {
   bloodGroup?: string;
   existingConditions?: string[];
   familyHistory?: string[]; // e.g. ['Diabetes', 'Hypertension', 'Thyroid']
+  healthPoints: number; // Earned by maintaining habit streaks
+  unlockedFeatures: string[]; // List of redeemed special ArogyaSaathi features
   pinCode?: string;
   anonymousMode?: boolean;
+}
+
+export interface SpecialFeature {
+  id: string;
+  name: string;
+  category: string;
+  pointCost: number;
+  description: string;
+  iconName: string;
+  sampleOutputTitle: string;
 }
 
 export interface HealthBiomarker {

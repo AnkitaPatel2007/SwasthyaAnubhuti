@@ -6,6 +6,8 @@ import { DiseaseExplorer } from './components/DiseaseExplorer.tsx';
 import { TrendsVisualizer } from './components/TrendsVisualizer.tsx';
 import { DailyHabitsTracker } from './components/DailyHabitsTracker.tsx';
 import { AssistantChat } from './components/AssistantChat.tsx';
+import { RewardsStore } from './components/RewardsStore.tsx';
+import { ArogyaSaathiPopup } from './components/ArogyaSaathiPopup.tsx';
 import { DailyCheckinModal } from './components/DailyCheckinModal.tsx';
 import { PrivacyModal } from './components/PrivacyModal.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
@@ -17,7 +19,8 @@ import {
   HabitGoal,
   HabitReminder,
   ChatMessage,
-  DiseaseCondition
+  DiseaseCondition,
+  SpecialFeature
 } from './types/index.ts';
 import {
   SEED_PROFILE,
@@ -27,6 +30,7 @@ import {
   SEED_REMINDERS
 } from './db/seedData.ts';
 import { DISEASES_CATALOG } from './db/diseasesData.ts';
+import { SPECIAL_FEATURES } from './db/specialFeaturesData.ts';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
@@ -39,6 +43,7 @@ export default function App() {
   const [habitGoals, setHabitGoals] = useState<HabitGoal[]>(SEED_HABIT_GOALS);
   const [reminders, setReminders] = useState<HabitReminder[]>(SEED_REMINDERS);
   const [diseases, setDiseases] = useState<DiseaseCondition[]>(DISEASES_CATALOG);
+  const [specialFeatures, setSpecialFeatures] = useState<SpecialFeature[]>(SPECIAL_FEATURES);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   // Navigation payload states
@@ -48,12 +53,13 @@ export default function App() {
   const [isCheckinOpen, setIsCheckinOpen] = useState<boolean>(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState<boolean>(false);
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
+  const [isArogyaPopupOpen, setIsArogyaPopupOpen] = useState<boolean>(false);
 
   // Fetch data on mount
   useEffect(() => {
     async function loadData() {
       try {
-        const [profData, repsData, updsData, goalsData, remsData, disData, msgsData] =
+        const [profData, repsData, updsData, goalsData, remsData, disData, msgsData, featsData] =
           await Promise.allSettled([
             apiClient.getProfile(),
             apiClient.getReports(),
@@ -62,6 +68,7 @@ export default function App() {
             apiClient.getReminders(),
             apiClient.getDiseases(),
             apiClient.getChatHistory(),
+            apiClient.getSpecialFeatures(),
           ]);
 
         if (profData.status === 'fulfilled') setProfile(profData.value);
@@ -71,6 +78,7 @@ export default function App() {
         if (remsData.status === 'fulfilled') setReminders(remsData.value);
         if (disData.status === 'fulfilled') setDiseases(disData.value);
         if (msgsData.status === 'fulfilled') setChatMessages(msgsData.value);
+        if (featsData.status === 'fulfilled') setSpecialFeatures(featsData.value);
       } catch (err) {
         console.warn('Initial server sync caught fallback:', err);
       }
@@ -97,6 +105,14 @@ export default function App() {
       // Refresh goals sync
       const freshGoals = await apiClient.getHabitGoals();
       setHabitGoals(freshGoals);
+
+      // Award +30 streak points for recording clinical vitals
+      try {
+        const ptsRes = await apiClient.awardStreakPoints(30);
+        setProfile(ptsRes.profile);
+      } catch (e) {
+        // fallback
+      }
     } catch (err) {
       console.error('Failed to log health update:', err);
     }
@@ -105,6 +121,28 @@ export default function App() {
   const handleQuickAddWater = async () => {
     const currentGlasses = latestUpdate?.waterGlasses ?? 6;
     await handleSaveHealthUpdate({ waterGlasses: currentGlasses + 1 });
+
+    // Award +10 points for hydration adherence
+    try {
+      const ptsRes = await apiClient.awardStreakPoints(10);
+      setProfile(ptsRes.profile);
+    } catch (e) {
+      // ignore fallback
+    }
+  };
+
+  const handleAwardBonusPoints = async (pts: number) => {
+    try {
+      const res = await apiClient.awardStreakPoints(pts);
+      setProfile(res.profile);
+    } catch (err) {
+      setProfile((prev) => ({ ...prev, healthPoints: (prev.healthPoints || 0) + pts }));
+    }
+  };
+
+  const handleRedeemFeature = async (featureId: string, pointCost: number) => {
+    const res = await apiClient.redeemFeature(featureId, pointCost);
+    setProfile(res.profile);
   };
 
   const handleToggleReminder = async (remId: string) => {
@@ -136,6 +174,14 @@ export default function App() {
   }) => {
     const saved = await apiClient.uploadReport(payload);
     setReports((prev) => [saved, ...prev]);
+
+    // Award +100 streak points for uploading and digitizing a lab report
+    try {
+      const ptsRes = await apiClient.awardStreakPoints(100);
+      setProfile(ptsRes.profile);
+    } catch (e) {
+      // ignore
+    }
   };
 
   const handleDeleteReport = async (reportId: string) => {
@@ -203,6 +249,21 @@ export default function App() {
     setDailyUpdates([]);
   };
 
+  const handleGoogleAuth = async (email: string, name?: string) => {
+    const res = await apiClient.loginWithGoogle(email, name);
+    setProfile(res.profile);
+    const [reps, upds, rems, goals] = await Promise.all([
+      apiClient.getReports(),
+      apiClient.getDailyUpdates(),
+      apiClient.getReminders(),
+      apiClient.getHabitGoals(),
+    ]);
+    setReports(reps);
+    setDailyUpdates(upds);
+    setReminders(rems);
+    setHabitGoals(goals);
+  };
+
   const handleLogout = () => {
     apiClient.clearToken();
     setProfile(SEED_PROFILE);
@@ -218,7 +279,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-rose-100 selection:text-rose-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-teal-100 selection:text-teal-900">
       {/* 3-Zone Navigation Header */}
       <Navbar
         currentTab={currentTab}
@@ -232,6 +293,8 @@ export default function App() {
         onOpenCheckin={() => setIsCheckinOpen(true)}
         onOpenPrivacy={() => setIsPrivacyOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
+        onToggleArogyaPopup={() => setIsArogyaPopupOpen(!isArogyaPopupOpen)}
+        isArogyaPopupOpen={isArogyaPopupOpen}
       />
 
       {/* Main Content Area */}
@@ -254,13 +317,20 @@ export default function App() {
               if (param) setSelectedBiomarkerTrend(param);
               setCurrentTab('trends');
             }}
-            onOpenDiseases={(diseaseId) => {
+            onOpenDiseases={(_diseaseId) => {
               setCurrentTab('diseases');
             }}
             onOpenHabits={() => setCurrentTab('habits')}
-            onOpenChat={() => setCurrentTab('chat')}
+            onOpenRewards={() => setCurrentTab('rewards')}
+            onOpenChat={(initialPrompt) => {
+              if (initialPrompt) {
+                handleSendMessage(initialPrompt);
+              }
+              setIsArogyaPopupOpen(true);
+            }}
             onQuickAddWater={handleQuickAddWater}
             onToggleReminder={handleToggleReminder}
+            onSaveHealthUpdate={handleSaveHealthUpdate}
           />
         )}
 
@@ -307,14 +377,31 @@ export default function App() {
             onToggleReminder={handleToggleReminder}
             onAddReminder={handleAddReminder}
             onDeleteReminder={handleDeleteReminder}
+            onOpenArogyaSaathi={() => setCurrentTab('rewards')}
+          />
+        )}
+
+        {currentTab === 'rewards' && (
+          <RewardsStore
+            profile={profile}
+            specialFeatures={specialFeatures}
+            onRedeemFeature={handleRedeemFeature}
+            onAwardBonusPoints={handleAwardBonusPoints}
+            onLaunchFeatureInChat={(prompt) => {
+              handleSendMessage(prompt);
+              setCurrentTab('chat');
+            }}
           />
         )}
 
         {currentTab === 'chat' && (
           <AssistantChat
             messages={chatMessages}
+            profile={profile}
+            specialFeatures={specialFeatures}
             onSendMessage={handleSendMessage}
             onClearHistory={handleClearChatHistory}
+            onRedeemFeature={handleRedeemFeature}
           />
         )}
       </main>
@@ -325,7 +412,9 @@ export default function App() {
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-900">AuraHealth</span>
             <span>·</span>
-            <span>Youth Health, Medical Reports & Preventive Habits Assistant</span>
+            <span className="font-medium text-teal-800">ArogyaSaathi (आरोग्यसाथी)</span>
+            <span>·</span>
+            <span>Youth Health, Medical Reports, Disease Prevention & Habit Streaks</span>
           </div>
 
           <div className="text-center sm:text-right">
@@ -357,15 +446,35 @@ export default function App() {
         onDeleteAccount={handleDeleteAccount}
       />
 
-      {/* Authentication Modal */}
+      {/* Authentication Modal with Google Mail Support */}
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         currentUser={profile}
         onLogin={handleLogin}
         onRegister={handleRegister}
+        onGoogleLogin={handleGoogleAuth}
         onLogout={handleLogout}
         onLoadDemo={handleLoadDemo}
+      />
+
+      {/* Top-Right ArogyaSaathi Floating Clinical Popup */}
+      <ArogyaSaathiPopup
+        isOpen={isArogyaPopupOpen}
+        onClose={() => setIsArogyaPopupOpen(false)}
+        messages={chatMessages}
+        profile={profile}
+        specialFeatures={specialFeatures}
+        onSendMessage={handleSendMessage}
+        onClearHistory={handleClearChatHistory}
+        onExpandToFullTab={() => {
+          setIsArogyaPopupOpen(false);
+          setCurrentTab('chat');
+        }}
+        onOpenRewards={() => {
+          setIsArogyaPopupOpen(false);
+          setCurrentTab('rewards');
+        }}
       />
     </div>
   );

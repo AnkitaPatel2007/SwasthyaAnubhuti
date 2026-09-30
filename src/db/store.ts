@@ -59,15 +59,15 @@ class HealthDataStore {
       {
         id: 'msg_welcome',
         sender: 'assistant',
-        content: `Hello Alex! I am your AuraHealth Medical & Wellness Assistant. I've analyzed your latest Complete Blood Count (CBC) and Vitamin Panel. 
+        content: `Hello Alex! I am ArogyaSaathi (आरोग्यसाथी), your dedicated AI Health & Preventive Companion. I've analyzed your latest Complete Blood Count (CBC) and Vitamin Panel. 
 
 Key Health Status:
 • **Ferritin:** 18 ng/mL (depleted iron reserves; explains your afternoon study fatigue)
 • **Vitamin D:** 24.2 ng/mL (sub-optimal indoor baseline)
 • **Resting Vitals:** BP 118/76 mmHg, Resting HR 71 bpm (healthy cardiovascular baseline)
-• **Habit Streaks:** 5-day hydration streak active!
+• **Habit Streaks:** 5-day hydration streak active! You have 🪙 240 Arogya Points ready to redeem special features!
 
-How can I assist your health goals today? You can ask about disease prevention, understanding your lab values, or building consistent daily habits.`,
+You can ask me about disease prevention, explaining lab test readings, or use your streak points to unlock special physician-prep dossiers and custom meal protocols.`,
         timestamp: new Date().toISOString(),
         citations: [
           { source: 'Quest Diagnostics Screening (Sep 2026)', referenceText: 'Serum Ferritin 18 ng/mL; 25-OH Vitamin D 24.2 ng/mL' },
@@ -113,6 +113,8 @@ How can I assist your health goals today? You can ask about disease prevention, 
       bloodGroup: 'O+',
       existingConditions: [],
       familyHistory: [],
+      healthPoints: 100, // 100 welcome bonus points
+      unlockedFeatures: [],
       anonymousMode: false
     };
 
@@ -126,7 +128,7 @@ How can I assist your health goals today? You can ask about disease prevention, 
       {
         id: `msg_init_${Date.now()}`,
         sender: 'assistant',
-        content: `Welcome to AuraHealth, ${name}! Your health profile is initialized. You can upload medical lab reports for instant parameter extraction, track your daily vitals and habits, and check disease risk factors.`,
+        content: `Namaste ${name}! I am ArogyaSaathi (आरोग्यसाथी), your personal AI health companion. You've been awarded 100 Welcome Points! Maintain your daily hydration and sleep streaks to earn points and unlock deep clinical dossiers.`,
         timestamp: new Date().toISOString()
       }
     ]);
@@ -156,10 +158,80 @@ How can I assist your health goals today? You can ask about disease prevention, 
       lifestyle: 'student',
       targetSleepHours: 8.0,
       targetWaterMl: 2500,
-      targetActivityMins: 30
+      targetActivityMins: 30,
+      healthPoints: 100,
+      unlockedFeatures: []
     };
 
     return { user, profile };
+  }
+
+  public async googleLogin(email: string, name?: string, avatarUrl?: string, googleId?: string): Promise<{ user: StoredUser; profile: UserProfile }> {
+    const cleanEmail = email.toLowerCase().trim();
+    let user = Array.from(this.users.values()).find(u => u.email.toLowerCase() === cleanEmail);
+
+    if (user) {
+      let profile = this.profiles.get(user.id);
+      if (!profile) {
+        profile = this.getProfile(user.id);
+      }
+      return { user, profile: profile! };
+    }
+
+    const userId = `usr_g_${Date.now()}`;
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(`google_oauth_${googleId || Date.now()}`, salt);
+
+    user = {
+      id: userId,
+      email: cleanEmail,
+      passwordHash,
+      createdAt: new Date().toISOString()
+    };
+
+    const displayName = name || cleanEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+    const newProfile: UserProfile = {
+      id: userId,
+      email: cleanEmail,
+      name: displayName,
+      age: 22,
+      gender: 'female',
+      heightCm: 168,
+      weightKg: 62,
+      lifestyle: 'student',
+      targetSleepHours: 8.0,
+      targetWaterMl: 2500,
+      targetActivityMins: 35,
+      bloodPressureSystolic: 118,
+      bloodPressureDiastolic: 76,
+      restingHeartRate: 71,
+      bloodGroup: 'O+',
+      existingConditions: ['Mild Iron Deficiency', 'Indoor Vitamin D Insufficiency'],
+      familyHistory: ['Type 2 Diabetes (Grandparent)', 'Hypertension (Father)'],
+      healthPoints: 240, // 240 welcome bonus points for Google Sign-in!
+      unlockedFeatures: [],
+      anonymousMode: false
+    };
+
+    this.users.set(userId, user);
+    this.profiles.set(userId, newProfile);
+    this.reports.set(userId, JSON.parse(JSON.stringify(SEED_REPORTS.map(r => ({ ...r, userId, id: `rep_${Date.now()}_${Math.random().toString(36).substring(2, 6)}` })))));
+    this.dailyUpdates.set(userId, JSON.parse(JSON.stringify(SEED_DAILY_UPDATES.map(u => ({ ...u, userId })))));
+    this.habitGoals.set(userId, JSON.parse(JSON.stringify(SEED_HABIT_GOALS.map(g => ({ ...g, userId, id: `goal_${Date.now()}_${Math.random().toString(36).substring(2, 6)}` })))));
+    this.reminders.set(userId, JSON.parse(JSON.stringify(SEED_REMINDERS.map(r => ({ ...r, userId, id: `rem_${Date.now()}_${Math.random().toString(36).substring(2, 6)}` })))));
+    this.chatMessages.set(userId, [
+      {
+        id: `msg_g_${Date.now()}`,
+        sender: 'assistant',
+        content: `Namaste ${displayName}! I am ArogyaSaathi (आरोग्यसाथी), your intelligent AI Medical & Health Companion. You have successfully authenticated using Google Mail (${cleanEmail}).
+        
+We've credited **240 Arogya Points** to your account! You can maintain your daily habit streaks (hydration, sleep, steps) to earn more points, and redeem them in the store to unlock advanced clinical dossiers and custom doctor consultation checklists.`,
+        timestamp: new Date().toISOString()
+      }
+    ]);
+
+    return { user, profile: newProfile };
   }
 
   public getProfile(userId: string): UserProfile | undefined {
@@ -385,6 +457,33 @@ How can I assist your health goals today? You can ask about disease prevention, 
 
   public clearChat(userId: string): void {
     this.chatMessages.set(userId, []);
+  }
+
+  // --- Arogya Points & Feature Unlocks ---
+  public awardStreakPoints(userId: string, points: number): UserProfile {
+    const profile = this.getProfile(userId);
+    if (!profile) throw new Error('User profile not found');
+    profile.healthPoints = (profile.healthPoints || 0) + points;
+    this.profiles.set(userId, profile);
+    return profile;
+  }
+
+  public redeemFeature(userId: string, featureId: string, pointCost: number): UserProfile {
+    const profile = this.getProfile(userId);
+    if (!profile) throw new Error('User profile not found');
+    const currentPoints = profile.healthPoints || 0;
+    if (currentPoints < pointCost) {
+      throw new Error(`Insufficient Arogya points. You need ${pointCost} points, but have ${currentPoints}. Maintain your daily habit streaks to earn more!`);
+    }
+    if (!profile.unlockedFeatures) {
+      profile.unlockedFeatures = [];
+    }
+    if (!profile.unlockedFeatures.includes(featureId)) {
+      profile.healthPoints = currentPoints - pointCost;
+      profile.unlockedFeatures.push(featureId);
+    }
+    this.profiles.set(userId, profile);
+    return profile;
   }
 
   // --- Privacy & Export ---

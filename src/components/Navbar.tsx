@@ -11,7 +11,8 @@ import {
   Lock,
   HeartPulse,
   Shield,
-  PhoneCall
+  PhoneCall,
+  Award
 } from 'lucide-react';
 import { UserProfile } from '../types/index.ts';
 
@@ -24,6 +25,8 @@ interface NavbarProps {
   onOpenCheckin: () => void;
   onOpenPrivacy: () => void;
   onOpenAuth: () => void;
+  onToggleArogyaPopup: () => void;
+  isArogyaPopupOpen: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -35,6 +38,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCheckin,
   onOpenPrivacy,
   onOpenAuth,
+  onToggleArogyaPopup,
+  isArogyaPopupOpen,
 }) => {
   const navItems = [
     { id: 'dashboard', label: 'Clinical Vitals', icon: Activity },
@@ -42,7 +47,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'diseases', label: 'Diseases & Symptoms', icon: Stethoscope },
     { id: 'trends', label: 'Biomarker Trends', icon: TrendingUp },
     { id: 'habits', label: 'Daily Habits', icon: CheckSquare },
-    { id: 'chat', label: 'AI Health Companion', icon: Bot },
+    { id: 'rewards', label: 'Streak Rewards', icon: Award },
+    { id: 'chat', label: 'ArogyaSaathi', icon: Bot },
   ];
 
   return (
@@ -52,7 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-teal-400 font-semibold tracking-wide">
             <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-            <span>CLINICAL MONITOR LIVE</span>
+            <span>SWASTHYAANUBHUTI LIVE</span>
           </div>
           <span className="text-slate-600 hidden sm:inline">|</span>
           <span className="text-slate-400 hidden sm:inline">
@@ -119,7 +125,29 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         {/* Zone 3: Clinical Actions & Privacy Mask */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
+          {/* Habit Streak Badge */}
+          <button
+            onClick={() => onSelectTab('rewards')}
+            title="Active Daily Health Habits Streak - View Rewards"
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200/90 hover:bg-amber-100 transition-colors cursor-pointer"
+          >
+            <span>🔥</span>
+            <span className="font-mono">5d</span>
+            <span className="hidden lg:inline text-[11px] font-medium text-amber-700">Streak</span>
+          </button>
+
+          {/* Arogya Points Pill */}
+          <button
+            onClick={() => onSelectTab('rewards')}
+            title="ArogyaSaathi Points Balance - Click to Open Rewards Store"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-teal-50 text-teal-900 border border-teal-200 hover:bg-teal-100/80 transition-colors cursor-pointer"
+          >
+            <span>🪙</span>
+            <span className="tabular-nums font-mono">{profile?.healthPoints || 0}</span>
+            <span className="text-[10px] text-teal-700 hidden lg:inline">Pts</span>
+          </button>
+
           {/* Quick Privacy Shield */}
           <button
             onClick={onTogglePrivacyMask}
@@ -143,6 +171,21 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <Activity className="w-3.5 h-3.5 text-teal-200" />
             <span>Record Vitals</span>
+          </button>
+
+          {/* ArogyaSaathi Top-Right Popup Button */}
+          <button
+            onClick={onToggleArogyaPopup}
+            title={isArogyaPopupOpen ? 'Close ArogyaSaathi' : 'Ask ArogyaSaathi AI Companion (Quick Popup)'}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 relative ${
+              isArogyaPopupOpen
+                ? 'bg-teal-900 text-white border border-teal-600 ring-2 ring-teal-500/30'
+                : 'bg-gradient-to-r from-teal-700 to-cyan-800 text-white hover:from-teal-800 hover:to-cyan-900 shadow-teal-700/20'
+            }`}
+          >
+            <Bot className="w-3.5 h-3.5 text-teal-200" />
+            <span className="hidden md:inline">ArogyaSaathi</span>
+            <span className="w-2 h-2 rounded-full bg-teal-300 animate-pulse" />
           </button>
 
           {/* Security & Account */}

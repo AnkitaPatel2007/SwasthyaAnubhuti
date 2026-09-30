@@ -11,7 +11,10 @@ import {
   Plus,
   Trash2,
   Sparkles,
-  Award
+  Award,
+  Coins,
+  Bot,
+  ArrowRight
 } from 'lucide-react';
 import {
   HabitGoal,
@@ -29,6 +32,7 @@ interface DailyHabitsTrackerProps {
   onToggleReminder: (id: string) => Promise<void>;
   onAddReminder: (rem: Omit<HabitReminder, 'id' | 'userId'>) => Promise<void>;
   onDeleteReminder: (id: string) => Promise<void>;
+  onOpenArogyaSaathi?: () => void;
 }
 
 export const DailyHabitsTracker: React.FC<DailyHabitsTrackerProps> = ({
@@ -40,6 +44,7 @@ export const DailyHabitsTracker: React.FC<DailyHabitsTrackerProps> = ({
   onToggleReminder,
   onAddReminder,
   onDeleteReminder,
+  onOpenArogyaSaathi,
 }) => {
   const [newRemTitle, setNewRemTitle] = useState('');
   const [newRemTime, setNewRemTime] = useState('14:00');
@@ -146,6 +151,39 @@ export const DailyHabitsTracker: React.FC<DailyHabitsTrackerProps> = ({
               </span>
             </div>
           ))}
+        </div>
+
+        {/* Streak Rewards & Arogya Points Banner */}
+        <div className="mt-5 p-4 bg-gradient-to-r from-teal-950 via-slate-900 to-teal-950 text-white rounded-xl border border-teal-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-300/40 text-amber-300 flex items-center justify-center shrink-0">
+              <Coins className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-bold text-white">
+                  Streak Rewards: {profile?.healthPoints || 0} Arogya Points Balance
+                </h4>
+                <span className="text-[10px] font-bold text-teal-300 bg-teal-900/60 border border-teal-700 px-1.5 py-0.2 rounded">
+                  ACTIVE
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Earn +20 points for every daily habit completed. Redeem points inside <strong>ArogyaSaathi</strong> for custom physician consultation dossiers and targeted nutrition protocols!
+              </p>
+            </div>
+          </div>
+
+          {onOpenArogyaSaathi && (
+            <button
+              onClick={onOpenArogyaSaathi}
+              className="px-4 py-2 bg-teal-400 hover:bg-teal-300 text-slate-950 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5 shrink-0"
+            >
+              <Bot className="w-3.5 h-3.5" />
+              <span>Redeem in ArogyaSaathi</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 

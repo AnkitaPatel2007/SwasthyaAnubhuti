@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import { dbStore } from './src/db/store.ts';
 import { parseMedicalDocumentWithGemini, generateChatResponseWithGemini } from './src/services/geminiService.ts';
 import { DISEASES_CATALOG } from './src/db/diseasesData.ts';
+import { SPECIAL_FEATURES } from './src/db/specialFeaturesData.ts';
 
 dotenv.config();
 
@@ -66,6 +67,20 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     return res.json({ token, profile });
   } catch (err: any) {
     return res.status(401).json({ error: err.message || 'Invalid credentials.' });
+  }
+});
+
+app.post('/api/auth/google', async (req: Request, res: Response) => {
+  try {
+    const { email, name, avatarUrl, googleId } = req.body;
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ error: 'Valid Google email address is required.' });
+    }
+    const { user, profile } = await dbStore.googleLogin(email, name, avatarUrl, googleId);
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
+    return res.json({ token, profile });
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message || 'Google authentication failed.' });
   }
 });
 
@@ -213,6 +228,34 @@ app.patch('/api/reminders/:id/toggle', requireAuth, (req: AuthRequest, res: Resp
 app.delete('/api/reminders/:id', requireAuth, (req: AuthRequest, res: Response) => {
   const list = dbStore.deleteReminder(req.userId!, req.params.id);
   return res.json(list);
+});
+
+// ----------------- AROGYA STREAK POINTS & SPECIAL FEATURES -----------------
+app.get('/api/points/features', (_req: Request, res: Response) => {
+  return res.json(SPECIAL_FEATURES);
+});
+
+app.post('/api/points/redeem', requireAuth, (req: AuthRequest, res: Response) => {
+  try {
+    const { featureId, pointCost } = req.body;
+    if (!featureId || typeof pointCost !== 'number') {
+      return res.status(400).json({ error: 'featureId and pointCost are required.' });
+    }
+    const updatedProfile = dbStore.redeemFeature(req.userId!, featureId, pointCost);
+    return res.json({ profile: updatedProfile, success: true });
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/points/award', requireAuth, (req: AuthRequest, res: Response) => {
+  try {
+    const { points } = req.body;
+    const updatedProfile = dbStore.awardStreakPoints(req.userId!, points || 20);
+    return res.json({ profile: updatedProfile, success: true });
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message });
+  }
 });
 
 // ----------------- AI HEALTH ASSISTANT -----------------

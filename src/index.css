@@ -1,1 +1,9 @@
 @import "tailwindcss";
+
+@layer utilities {
+  .privacy-masked {
+    filter: blur(8px);
+    user-select: none;
+    transition: filter 0.2s ease-in-out;
+  }
+}

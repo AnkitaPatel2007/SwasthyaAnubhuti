@@ -1,72 +1,116 @@
-# AuraHealth — Youth Health, Disease Prevention, Medical Reports & Daily Habits
+# AuraHealth — Preventive Health & Biomarker Intelligence Platform
 
-AuraHealth is an enterprise-grade, preventive health assistant designed for students and young adults (ages 16–50). It prioritizes **real-world health updates, chronic disease awareness, laboratory report intelligence, and consistent daily habits**, avoiding clinical intimidation while maintaining medical accuracy and strict privacy.
-
----
-
-## 4 Core Pillars
-
-### 1. Normal Health Updates & Clinical Vitals
-- **Vitals Cockpit**: Track Resting Blood Pressure (systolic/diastolic mmHg), Resting Heart Rate (bpm), Body Mass Index (BMI) & Weight (kg), and Daily Energy/Stress ratings.
-- **Daily Health Updates Modal**: Log blood pressure readings, resting pulse, energy scores, sleep duration, hydration glasses, activity minutes, screen time hours, and physical symptoms experienced today.
-- **Cross-Correlated Health Briefing**: Synthesizes vitals, lab reports, and habit consistency into clear preventive insights.
-
-### 2. Youth Disease & Preventive Health Radar
-- **Comprehensive Disease Directory**: Evidence-based guides for conditions common in students and young professionals:
-  - *Iron Deficiency & Anemia* (Hemoglobin, Serum Ferritin, MCV)
-  - *Vitamin D & B12 Deficiencies* (25-OH Vitamin D, Cobalamin)
-  - *Pre-Diabetes & Insulin Resistance* (Fasting Blood Sugar, HbA1c, TG/HDL ratio)
-  - *Dyslipidemia & Early Cardiovascular Risk* (LDL-C, Triglycerides, HDL-C)
-  - *Early Hypertension* (Blood Pressure, Sodium, Stress response)
-  - *Thyroid Disorders (Hypothyroidism & Hyperthyroidism)* (TSH, Free T4, TPO Antibodies)
-  - *Fatty Liver Disease (NAFLD / MAFLD)* (ALT, AST, Hepatic ultrasound)
-  - *GERD (Acid Reflux) & Irritable Bowel Syndrome (IBS)* (Digestive motility, late dinners)
-  - *Migraines & Tension Headaches* (20-20-20 screen protocol, suboccipital strain)
-  - *Chronic Academic Burnout & Anxiety* (Cortisol, autonomic balance, sleep recovery)
-- **Diagnostic Lab Test Mapping**: Explains which laboratory biomarkers to monitor for each condition.
-- **Red-Flag Warning Signs**: Clear clinical indications when to seek immediate medical or emergency care.
-
-### 3. Medical Report Intelligence & Multimodal OCR
-- **Document Ingestion**: Upload lab reports (PDF, PNG, JPG) from Quest Diagnostics, Labcorp, Hospital, or Campus Clinics.
-- **Server-Side Gemini 3.8 Flash OCR**: Accurately extracts parameter names, numeric values, units, reference intervals, and status flags (Optimal, Low, High, Borderline).
-- **Plain-Language Explanations**: Connects laboratory values to daily life (e.g. low ferritin explaining afternoon study exhaustion).
-- **Questions for Your Doctor**: Actionable, respectful questions to bring to clinical consultations.
-- **Longitudinal Trend Tracking**: Plot biomarkers over multiple test dates with shaded normal reference bands.
-
-### 4. Daily Habit System & Automation
-- **Habit Streaks**: Multi-day streak tracking for Hydration, Sleep Duration, Physical Movement, Digital Screen Curfew, and Supplement/Medication Adherence.
-- **Interactive Habit Panels**:
-  - *Hydration Tank*: Visual progress bar, target tracking (e.g. 2,500 ml), quick `+ 1 Glass (250ml)` button.
-  - *Sleep Architecture*: Duration slider, bedtime target, 5-star quality rating.
-  - *Physical Movement*: Minutes tracker and activity type selector (Brisk walking, Running, Gym, Cycling, Yoga).
-  - *Screen Time & Digital Curfew*: Monitor laptop/phone hours with 20-20-20 eye break reminders.
-  - *Supplements & Medications*: Daily checklist (Iron + Vit C, Vitamin D3, Magnesium, Omega-3, Multivitamin).
-- **Automated Reminders**: Custom reminder scheduling with toggle controls.
+**AuraHealth** is an AI-powered preventive health intelligence platform built for modern individuals, students, and busy professionals. It combines real-time vitals tracking, intelligent medical report parsing, longitudinal biomarker decline detection, and actionable habit coaching into an intuitive, zero-jargon experience.
 
 ---
 
-## Security, Privacy & Confidentiality
+## 🚀 Startup Highlights & Core Features
 
-- **Confidential Screen Mask**: 1-click blur filter across all sensitive health vitals, lab readings, and symptom notes.
-- **Anonymous Mode**: Masks personal identification across all views.
-- **Optional 4-Digit Passcode PIN**.
-- **One-Click JSON Data Export**: Complete data portability.
-- **Permanent Account Wipe**: Full cascading deletion of all medical records and logs.
+### 1. Daily Vitals & Longitudinal Tracking
+- **Smart Body Battery**: Real-time energy score derived from sleep duration, resting heart rate, and hydration.
+- **Vitals Overview**: Blood pressure (systolic/diastolic), resting heart rate, weight, and stress levels.
+- **7-Day Longitudinal Trend Surveillance**: Automatically monitors sleep, hydration, and vitality trends to catch downward drifts before symptoms escalate.
+
+### 2. 7-Day Biomarker Decline Alert System
+- **Longitudinal Linear Regression Engine**: Detects multi-day drops in sleep hours, hydration, and energy ratings.
+- **Clear Everyday Language**: Replaces intimidating medical jargon with short, actionable terms.
+- **1-Click Recovery Actions**: Quick logging (+1 glass of water), circadian bedtime reminders, and tailored recovery plans.
+
+### 3. Medical Report Intelligence (PDF & Images)
+- **Multimodal Lab Report Extraction**: Powered by Google Gemini 3 models to parse Complete Blood Count (CBC), Serum Ferritin, 25-OH Vitamin D, Lipid Profiles, and Thyroid Panels.
+- **Plain-English Explanations**: Explains biological mechanisms and youth relevance without frightening clinical terminology.
+- **Doctor Discussion Points**: Suggests specific questions to bring to your next healthcare visit.
+
+### 4. Emergency Care & Hospital Finder
+- **Real-Time Nearby Facilities**: Uses Google Maps and Search grounding to identify 24/7 emergency rooms, trauma centers, walk-in clinics, and pathology labs.
+- **One-Tap Emergency Calling**: Quick access to national helplines (112, 108, 988, 102) and personal emergency contacts.
+
+### 5. Habit Streaks & Gamified Wellness
+- **Weekly Achievement Path**: Daily health check-in milestones with streak counters and crown badges.
+- **Rewards System**: Earn wellness points for consistent hydration and sleep habits, redeemable for fitness rewards.
+
+### 6. HIPAA & Privacy Isolation
+- Client-side privacy masking mode.
+- Local and encrypted biomarker storage.
+- Full data export and account wipe capabilities.
 
 ---
 
-## Local Development & Deployment
+## 🛠️ Hybrid Tech Stack Architecture
 
+AuraHealth is built on a high-performance **Hybrid Architecture**:
+
+- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, Lucide Icons.
+- **Backend**: Node.js, Express, TypeScript (`tsx`).
+- **AI & ML Engine**:
+  - **Python 3.10**: Longitudinal linear regression engine (`python/biomarker_analytics.py`), clinical symptom triaging (`python/symptom_triage.py`), and LangChain pipelines.
+  - **Google GenAI SDK**: Multimodal Gemini 3.5 Flash models for document parsing, reasoning, and search grounding.
+- **Database & State**: In-memory + persistent JSON store with JWT authentication.
+
+---
+
+## 📦 Local Installation & Setup
+
+### Prerequisites
+- **Node.js**: v18.x or v20.x
+- **Python**: 3.10+
+- **npm** or **pnpm**
+
+### 1. Clone & Install Dependencies
 ```bash
-# Install dependencies
+git clone <your-repo-url>
+cd aurahealth
+
+# Install Node dependencies
 npm install
 
-# Start development full-stack server
+# Setup Python dependencies
+pip install langchain-core pydantic requests
+```
+
+### 2. Configure Environment Variables
+Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+Ensure your `GEMINI_API_KEY` is set in `.env`:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+PORT=3000
+```
+
+### 3. Run Development Server
+```bash
 npm run dev
+```
+The application will launch on `http://localhost:3000`.
 
-# Build for production
+### 4. Build for Production
+```bash
 npm run build
-
-# Start production server
 npm start
 ```
+
+---
+
+## 🐙 Pushing to Your GitHub Repository
+
+To push this codebase to a new GitHub repository:
+
+1. **Create a new repository** on [github.com/new](https://github.com/new) (e.g. `aurahealth-app`).
+2. Run the following commands in your terminal:
+
+```bash
+# Add your GitHub repository as remote origin
+git remote add origin https://github.com/<your-username>/<your-repo-name>.git
+
+# Push the main branch
+git branch -M main
+git push -u origin main
+```
+
+---
+
+## 🔒 Security & Medical Disclaimer
+
+*AuraHealth is a preventive lifestyle and health education tool. It does not replace professional medical diagnosis, emergency triage, or clinical prescriptions. Always consult a qualified medical professional for acute symptoms or changes to medication.*

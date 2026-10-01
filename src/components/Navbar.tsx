@@ -11,7 +11,8 @@ import {
   Bot,
   User,
   Eye,
-  EyeOff
+  EyeOff,
+  Smartphone
 } from 'lucide-react';
 import { UserProfile } from '../types/index.ts';
 
@@ -26,6 +27,7 @@ interface NavbarProps {
   onToggleArogyaPopup: () => void;
   isArogyaPopupOpen: boolean;
   onOpenCallModal: () => void;
+  onOpenAndroidModal?: () => void;
   activeAlertsCount?: number;
 }
 
@@ -40,6 +42,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleArogyaPopup,
   isArogyaPopupOpen,
   onOpenCallModal,
+  onOpenAndroidModal,
   activeAlertsCount = 2,
 }) => {
   const navItems = [
@@ -79,6 +82,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>⚠️ {activeAlertsCount} Alert{activeAlertsCount > 1 ? 's' : ''}</span>
             </button>
           )}
+
+          <button
+            onClick={onOpenAndroidModal}
+            className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 hover:text-white border border-teal-500/40 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer active:scale-95 shadow-2xs"
+            title="Download or Install Android App"
+          >
+            <Smartphone className="w-3 h-3 text-teal-300" />
+            <span>Android App</span>
+          </button>
 
           <button
             onClick={onOpenCallModal}

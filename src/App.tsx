@@ -11,6 +11,7 @@ import { ArogyaSaathiPopup } from './components/ArogyaSaathiPopup.tsx';
 import { DailyCheckinModal } from './components/DailyCheckinModal.tsx';
 import { ProfileModal } from './components/ProfileModal.tsx';
 import { EmergencyCallModal } from './components/EmergencyCallModal.tsx';
+import { AndroidAppModal } from './components/AndroidAppModal.tsx';
 import { apiClient } from './services/api.ts';
 import {
   UserProfile,
@@ -54,6 +55,7 @@ export default function App() {
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
   const [isArogyaPopupOpen, setIsArogyaPopupOpen] = useState<boolean>(false);
   const [isCallModalOpen, setIsCallModalOpen] = useState<boolean>(false);
+  const [isAndroidModalOpen, setIsAndroidModalOpen] = useState<boolean>(false);
 
   // Fetch data on mount
   useEffect(() => {
@@ -302,6 +304,7 @@ export default function App() {
         onToggleArogyaPopup={() => setIsArogyaPopupOpen(!isArogyaPopupOpen)}
         isArogyaPopupOpen={isArogyaPopupOpen}
         onOpenCallModal={() => setIsCallModalOpen(true)}
+        onOpenAndroidModal={() => setIsAndroidModalOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -487,6 +490,12 @@ export default function App() {
       <EmergencyCallModal
         isOpen={isCallModalOpen}
         onClose={() => setIsCallModalOpen(false)}
+      />
+
+      {/* Android Native & PWA Installation Modal */}
+      <AndroidAppModal
+        isOpen={isAndroidModalOpen}
+        onClose={() => setIsAndroidModalOpen(false)}
       />
     </div>
   );

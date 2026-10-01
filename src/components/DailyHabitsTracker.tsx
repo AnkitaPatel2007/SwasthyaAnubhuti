@@ -22,29 +22,36 @@ import {
   DailyHealthUpdate,
   UserProfile
 } from '../types/index.ts';
+import { WeeklyStreakMilestone } from './WeeklyStreakMilestone.tsx';
 
 interface DailyHabitsTrackerProps {
   goals: HabitGoal[];
   reminders: HabitReminder[];
   latestUpdate: DailyHealthUpdate | null;
+  dailyUpdates?: DailyHealthUpdate[];
   profile: UserProfile | null;
   onUpdateHealth: (data: Partial<DailyHealthUpdate>) => Promise<void>;
   onToggleReminder: (id: string) => Promise<void>;
   onAddReminder: (rem: Omit<HabitReminder, 'id' | 'userId'>) => Promise<void>;
   onDeleteReminder: (id: string) => Promise<void>;
   onOpenArogyaSaathi?: () => void;
+  onOpenRewards?: () => void;
+  onClaimRewardPoints?: (points: number) => Promise<void>;
 }
 
 export const DailyHabitsTracker: React.FC<DailyHabitsTrackerProps> = ({
   goals,
   reminders,
   latestUpdate,
+  dailyUpdates = [],
   profile,
   onUpdateHealth,
   onToggleReminder,
   onAddReminder,
   onDeleteReminder,
   onOpenArogyaSaathi,
+  onOpenRewards,
+  onClaimRewardPoints,
 }) => {
   const [newRemTitle, setNewRemTitle] = useState('');
   const [newRemTime, setNewRemTime] = useState('14:00');
@@ -98,6 +105,14 @@ export const DailyHabitsTracker: React.FC<DailyHabitsTrackerProps> = ({
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
+      {/* 7-Day Weekly Streak Milestone Journey */}
+      <WeeklyStreakMilestone
+        profile={profile}
+        dailyUpdates={dailyUpdates}
+        onOpenRewards={onOpenRewards}
+        onClaimRewardPoints={onClaimRewardPoints}
+      />
+
       {/* Header & Streak Scorecard */}
       <div className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">

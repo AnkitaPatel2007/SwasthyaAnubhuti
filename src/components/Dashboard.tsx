@@ -41,6 +41,7 @@ import {
   HabitReminder,
   DiseaseCondition
 } from '../types/index.ts';
+import { WeeklyStreakMilestone } from './WeeklyStreakMilestone.tsx';
 
 interface DashboardProps {
   profile: UserProfile | null;
@@ -60,6 +61,7 @@ interface DashboardProps {
   onQuickAddWater: () => Promise<void>;
   onToggleReminder: (id: string) => Promise<void>;
   onSaveHealthUpdate?: (log: Partial<DailyHealthUpdate>) => Promise<void>;
+  onClaimMilestonePoints?: (points: number) => Promise<void>;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -80,6 +82,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onQuickAddWater,
   onToggleReminder,
   onSaveHealthUpdate,
+  onClaimMilestonePoints,
 }) => {
   // Mode: 'simple' for normal everyday users, 'doctor' for clinical jargon
   const [viewMode, setViewMode] = useState<'simple' | 'doctor'>('simple');
@@ -233,11 +236,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold text-slate-900">
-                {viewMode === 'simple' ? 'Simple & Easy Mode Active' : 'Detailed Clinical Doctor View'}
+                {viewMode === 'simple' ? 'Apna SwasthyaAnubhuti' : 'Detailed Clinical Doctor View'}
               </h2>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                {viewMode === 'simple' ? 'Zero Medical Jargon' : 'Laboratory Values'}
-              </span>
+              {viewMode === 'doctor' && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                  Laboratory Values
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-500">
               {viewMode === 'simple'
@@ -271,6 +276,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </button>
         </div>
       </div>
+
+      {/* WEEKLY STREAK MILESTONE (7-Day Daily Achievement Path & Crown Badge) */}
+      <WeeklyStreakMilestone
+        profile={profile}
+        dailyUpdates={dailyUpdates}
+        onOpenCheckin={onOpenCheckin}
+        onOpenRewards={onOpenRewards}
+        onClaimRewardPoints={onClaimMilestonePoints}
+      />
 
       {/* 2. REAL-LIFE VISUAL ANIMATED OBJECTS (The Big 4) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

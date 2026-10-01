@@ -278,6 +278,13 @@ export default function App() {
     setHabitGoals(SEED_HABIT_GOALS);
   };
 
+  const handleClaimMilestonePoints = async (pointsToAdd: number) => {
+    if (!profile) return;
+    const currentPoints = profile.healthPoints || 0;
+    const updated = await apiClient.updateProfile({ healthPoints: currentPoints + pointsToAdd });
+    setProfile(updated);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-teal-100 selection:text-teal-900">
       {/* 3-Zone Navigation Header */}
@@ -332,6 +339,7 @@ export default function App() {
             onQuickAddWater={handleQuickAddWater}
             onToggleReminder={handleToggleReminder}
             onSaveHealthUpdate={handleSaveHealthUpdate}
+            onClaimMilestonePoints={handleClaimMilestonePoints}
           />
         )}
 
@@ -373,12 +381,15 @@ export default function App() {
             goals={habitGoals}
             reminders={reminders}
             latestUpdate={latestUpdate}
+            dailyUpdates={dailyUpdates}
             profile={profile}
             onUpdateHealth={handleSaveHealthUpdate}
             onToggleReminder={handleToggleReminder}
             onAddReminder={handleAddReminder}
             onDeleteReminder={handleDeleteReminder}
             onOpenArogyaSaathi={() => setCurrentTab('rewards')}
+            onOpenRewards={() => setCurrentTab('rewards')}
+            onClaimRewardPoints={handleClaimMilestonePoints}
           />
         )}
 

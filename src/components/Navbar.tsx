@@ -26,6 +26,7 @@ interface NavbarProps {
   onToggleArogyaPopup: () => void;
   isArogyaPopupOpen: boolean;
   onOpenCallModal: () => void;
+  activeAlertsCount?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -39,40 +40,53 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleArogyaPopup,
   isArogyaPopupOpen,
   onOpenCallModal,
+  activeAlertsCount = 2,
 }) => {
   const navItems = [
-    { id: 'dashboard', label: 'Clinical Vitals', icon: Activity },
-    { id: 'reports', label: 'Reports Vault', icon: FileText },
-    { id: 'trends', label: 'Biomarker Trends', icon: TrendingUp },
-    { id: 'diseases', label: 'Diseases & Symptoms', icon: Stethoscope },
-    { id: 'habits', label: 'Daily Habits', icon: Heart },
-    { id: 'rewards', label: 'Rewards Store', icon: Coins },
+    { id: 'dashboard', label: 'Vitals', icon: Activity },
+    { id: 'reports', label: 'Reports', icon: FileText },
+    { id: 'trends', label: 'Trends', icon: TrendingUp },
+    { id: 'diseases', label: 'Symptoms', icon: Stethoscope },
+    { id: 'habits', label: 'Habits', icon: Heart },
+    { id: 'rewards', label: 'Rewards', icon: Coins },
   ];
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-teal-100 shadow-[0_2px_15px_-3px_rgba(15,118,110,0.06)]">
-      {/* Top Clinical Utility Micro-Bar */}
+      {/* Top Utility Micro-Bar */}
       <div className="bg-slate-900 text-slate-300 text-[10px] sm:text-[11px] py-1 px-3 sm:px-6 lg:px-8 flex items-center justify-between border-b border-slate-800">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 text-teal-400 font-semibold tracking-wide">
             <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-            <span>SWASTHYAANUBHUTI LIVE</span>
+            <span>LIVE</span>
           </div>
           <span className="text-slate-600 hidden sm:inline">|</span>
           <span className="text-slate-400 hidden sm:inline">
-            Patient: {profile?.name || 'Alex Rivera'} ({profile?.bloodGroup || 'O+'})
+            User: {profile?.name || 'Alex'} ({profile?.bloodGroup || 'O+'})
           </span>
         </div>
 
-        <div className="flex items-center gap-3 text-slate-400">
-          <span className="hidden md:inline">HIPAA / GDPR Isolation Active</span>
+        <div className="flex items-center gap-2 sm:gap-3 text-slate-400">
+          <span className="hidden md:inline">Private & Secure</span>
+
+          {activeAlertsCount > 0 && (
+            <button
+              onClick={() => onSelectTab('dashboard')}
+              className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-white border border-amber-500/40 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer active:scale-95 shadow-2xs animate-pulse"
+              title="7-Day Alert: Sleep & Water are down"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+              <span>⚠️ {activeAlertsCount} Alert{activeAlertsCount > 1 ? 's' : ''}</span>
+            </button>
+          )}
+
           <button
             onClick={onOpenCallModal}
             className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white border border-rose-500/40 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer active:scale-95 shadow-2xs"
-            title="Open Emergency Calling Hub & Connect Phone Contacts"
+            title="Emergency Numbers"
           >
             <PhoneCall className="w-3 h-3 text-rose-400 animate-pulse" />
-            <span>Call / Emergency Contacts</span>
+            <span>Emergency Call</span>
           </button>
         </div>
       </div>

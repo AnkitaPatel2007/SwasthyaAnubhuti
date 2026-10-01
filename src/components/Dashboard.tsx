@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Activity,
   Droplets,
@@ -42,6 +42,8 @@ import {
   DiseaseCondition
 } from '../types/index.ts';
 import { WeeklyStreakMilestone } from './WeeklyStreakMilestone.tsx';
+import { BiomarkerDeclineAlertBanner } from './BiomarkerDeclineAlertBanner.tsx';
+import { detectBiomarkerDeclines } from '../utils/trendAlertEngine.ts';
 
 interface DashboardProps {
   profile: UserProfile | null;
@@ -60,6 +62,7 @@ interface DashboardProps {
   onOpenChat: (initialPrompt?: string) => void;
   onQuickAddWater: () => Promise<void>;
   onToggleReminder: (id: string) => Promise<void>;
+  onAddReminder?: (title: string, time: string, category: 'water' | 'sleep') => Promise<void>;
   onSaveHealthUpdate?: (log: Partial<DailyHealthUpdate>) => Promise<void>;
   onClaimMilestonePoints?: (points: number) => Promise<void>;
 }
@@ -81,12 +84,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenChat,
   onQuickAddWater,
   onToggleReminder,
+  onAddReminder,
   onSaveHealthUpdate,
   onClaimMilestonePoints,
 }) => {
   // Mode: 'simple' for normal everyday users, 'doctor' for clinical jargon
   const [viewMode, setViewMode] = useState<'simple' | 'doctor'>('simple');
   const [searchQuery, setSearchQuery] = useState('');
+  const [dismissedAlertIds, setDismissedAlertIds] = useState<string[]>([]);
+
+  // Biomarker Decline Alerts (7-Day Trend Engine)
+  const trendAlerts = useMemo(() => {
+    const detected = detectBiomarkerDeclines(dailyUpdates || [], profile);
+    return detected.filter(a => !dismissedAlertIds.includes(a.id));
+  }, [dailyUpdates, profile, dismissedAlertIds]);
 
   // Interactive Health Insights Chart State
   const [insightMetric, setInsightMetric] = useState<'combined' | 'sleep' | 'energy' | 'water'>('combined');
@@ -236,18 +247,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold text-slate-900">
-                {viewMode === 'simple' ? 'Apna SwasthyaAnubhuti' : 'Detailed Clinical Doctor View'}
+                {viewMode === 'simple' ? 'My Health Overview' : 'Detailed Medical View'}
               </h2>
               {viewMode === 'doctor' && (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                  Laboratory Values
+                  Lab Values
                 </span>
               )}
             </div>
             <p className="text-xs text-slate-500">
               {viewMode === 'simple'
-                ? 'Explaining your blood tests, heart, sleep, and energy like a caring family physician in simple words.'
-                : 'Showing exact clinical biomarkers, units, reference intervals, and medical terminology.'}
+                ? 'Simple, everyday terms for your sleep, water, and tests.'
+                : 'Exact lab numbers and reference ranges.'}
             </p>
           </div>
         </div>
@@ -286,6 +297,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
         onClaimRewardPoints={onClaimMilestonePoints}
       />
 
+      {/* 7-DAY BIOMARKER TREND DECLINE ALERTS & ACTIONABLE RECOVERY DIRECTIVES */}
+      {trendAlerts.length > 0 && (
+        <BiomarkerDeclineAlertBanner
+          alerts={trendAlerts}
+          onQuickAddWater={onQuickAddWater}
+          onAddReminder={onAddReminder}
+          onOpenChatWithPrompt={onOpenChat}
+          onDismissAlert={(id) => setDismissedAlertIds((prev) => [...prev, id])}
+        />
+      )}
+
       {/* 2. REAL-LIFE VISUAL ANIMATED OBJECTS (The Big 4) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* OBJECT 1: ANIMATED BODY BATTERY */}
@@ -293,7 +315,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex justify-between items-start">
             <div>
               <span className="text-xs font-bold text-slate-500 block uppercase tracking-wider font-mono">
-                {viewMode === 'simple' ? 'Your Body Battery' : 'Cellular Energy Vector'}
+                {viewMode === 'simple' ? 'Body Battery' : 'Energy Level'}
               </span>
               <h3 className="text-lg font-black text-slate-900 mt-0.5">
                 85% Charged

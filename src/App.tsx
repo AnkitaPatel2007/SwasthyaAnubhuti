@@ -338,6 +338,9 @@ export default function App() {
             }}
             onQuickAddWater={handleQuickAddWater}
             onToggleReminder={handleToggleReminder}
+            onAddReminder={async (title, time, category) => {
+              await handleAddReminder({ title, time, category, enabled: true, frequency: 'daily' });
+            }}
             onSaveHealthUpdate={handleSaveHealthUpdate}
             onClaimMilestonePoints={handleClaimMilestonePoints}
           />

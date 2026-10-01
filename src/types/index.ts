@@ -143,3 +143,35 @@ export interface ChatMessage {
   citations?: ChatCitation[];
   isRedFlagWarning?: boolean;
 }
+
+export interface TrendActionTip {
+  title: string;
+  description: string;
+  category: 'quick_fix' | 'routine' | 'nutrition' | 'doctor';
+  actionLabel?: string;
+  actionType?: 'add_water' | 'set_reminder' | 'ask_ai';
+}
+
+export interface TrendDataPoint {
+  date: string;
+  day: string;
+  value: number;
+}
+
+export interface TrendDeclineAlert {
+  id: string;
+  biomarker: 'sleep' | 'water' | 'energy' | 'activity' | 'vitals';
+  title: string;
+  severity: 'warning' | 'critical';
+  consecutiveDeclineDays: number;
+  baselineValue: number;
+  currentValue: number;
+  unit: string;
+  deltaText: string;
+  summary: string;
+  impactExplanation: string;
+  actionableTips: TrendActionTip[];
+  dataPoints: TrendDataPoint[];
+  dismissed?: boolean;
+}
+

@@ -3,7 +3,11 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { dbStore } from './src/db/store.ts';
+
+const execFileAsync = promisify(execFile);
 import {
   parseMedicalDocumentWithGemini,
   generateChatResponseWithGemini,
@@ -271,6 +275,30 @@ app.post('/api/maps/nearby', async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error('Maps nearby search error:', err);
     return res.status(500).json({ error: err.message || 'Failed to search nearby facilities.' });
+  }
+});
+
+// ----------------- PYTHON ML BIOMARKER TREND ALERTS -----------------
+app.post('/api/trends/alerts', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId!;
+    const updates = dbStore.getDailyUpdates(userId);
+    const pythonScript = path.resolve(__dirname, 'python', 'biomarker_analytics.py');
+
+    try {
+      const { stdout } = await execFileAsync(
+        'python3',
+        [pythonScript, JSON.stringify({ records: updates })],
+        { timeout: 5000 }
+      );
+      const parsed = JSON.parse(stdout);
+      return res.json(parsed);
+    } catch (pyErr) {
+      console.warn('Python analytics process error, using fallback trend alerts:', pyErr);
+      return res.json({ status: 'fallback', alerts: [] });
+    }
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
   }
 });
 

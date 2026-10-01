@@ -9,8 +9,7 @@ import { AssistantChat } from './components/AssistantChat.tsx';
 import { RewardsStore } from './components/RewardsStore.tsx';
 import { ArogyaSaathiPopup } from './components/ArogyaSaathiPopup.tsx';
 import { DailyCheckinModal } from './components/DailyCheckinModal.tsx';
-import { PrivacyModal } from './components/PrivacyModal.tsx';
-import { AuthModal } from './components/AuthModal.tsx';
+import { ProfileModal } from './components/ProfileModal.tsx';
 import { apiClient } from './services/api.ts';
 import {
   UserProfile,
@@ -51,8 +50,7 @@ export default function App() {
 
   // Modals
   const [isCheckinOpen, setIsCheckinOpen] = useState<boolean>(false);
-  const [isPrivacyOpen, setIsPrivacyOpen] = useState<boolean>(false);
-  const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
+  const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
   const [isArogyaPopupOpen, setIsArogyaPopupOpen] = useState<boolean>(false);
 
   // Fetch data on mount
@@ -291,8 +289,7 @@ export default function App() {
         privacyMask={privacyMask}
         onTogglePrivacyMask={() => setPrivacyMask(!privacyMask)}
         onOpenCheckin={() => setIsCheckinOpen(true)}
-        onOpenPrivacy={() => setIsPrivacyOpen(true)}
-        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenProfile={() => setIsProfileOpen(true)}
         onToggleArogyaPopup={() => setIsArogyaPopupOpen(!isArogyaPopupOpen)}
         isArogyaPopupOpen={isArogyaPopupOpen}
       />
@@ -307,6 +304,7 @@ export default function App() {
           <Dashboard
             profile={profile}
             latestUpdate={latestUpdate}
+            dailyUpdates={dailyUpdates}
             reports={reports}
             habitGoals={habitGoals}
             reminders={reminders}
@@ -431,30 +429,21 @@ export default function App() {
         onSave={handleSaveHealthUpdate}
       />
 
-      {/* Confidentiality & Privacy Modal */}
-      <PrivacyModal
-        isOpen={isPrivacyOpen}
-        onClose={() => setIsPrivacyOpen(false)}
+      {/* Single Standard Profile, Biometric Baselines, Security & Account Modal */}
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
         profile={profile}
-        privacyMask={privacyMask}
-        onTogglePrivacyMask={() => setPrivacyMask(!privacyMask)}
         onUpdateProfile={async (updates) => {
           const res = await apiClient.updateProfile(updates);
           setProfile(res);
         }}
-        onExportData={handleExportData}
-        onDeleteAccount={handleDeleteAccount}
-      />
-
-      {/* Authentication Modal with Google Mail Support */}
-      <AuthModal
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        currentUser={profile}
         onLogin={handleLogin}
         onRegister={handleRegister}
         onGoogleLogin={handleGoogleAuth}
         onLogout={handleLogout}
+        onExportData={handleExportData}
+        onDeleteAccount={handleDeleteAccount}
         onLoadDemo={handleLoadDemo}
       />
 

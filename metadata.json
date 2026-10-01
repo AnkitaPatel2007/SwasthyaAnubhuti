@@ -1,6 +1,6 @@
 {
   "name": "AuraHealth - GenAI Youth Health & Wellness Assistant",
   "description": "Preventive health intelligence, medical report comprehension, longitudinal biomarker tracking, and personalized wellness coaching tailored for young adults and students.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

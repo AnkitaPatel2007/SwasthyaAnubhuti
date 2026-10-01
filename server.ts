@@ -4,7 +4,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import { dbStore } from './src/db/store.ts';
-import { parseMedicalDocumentWithGemini, generateChatResponseWithGemini } from './src/services/geminiService.ts';
+import {
+  parseMedicalDocumentWithGemini,
+  generateChatResponseWithGemini,
+  searchNearbyMedicalFacilitiesWithGemini
+} from './src/services/geminiService.ts';
 import { DISEASES_CATALOG } from './src/db/diseasesData.ts';
 import { SPECIAL_FEATURES } from './src/db/specialFeaturesData.ts';
 
@@ -255,6 +259,18 @@ app.post('/api/points/award', requireAuth, (req: AuthRequest, res: Response) => 
     return res.json({ profile: updatedProfile, success: true });
   } catch (err: any) {
     return res.status(400).json({ error: err.message });
+  }
+});
+
+// ----------------- NEARBY HOSPITALS & MAPS -----------------
+app.post('/api/maps/nearby', async (req: Request, res: Response) => {
+  try {
+    const { query = '', location = 'New Delhi', categoryFilter = 'all' } = req.body;
+    const result = await searchNearbyMedicalFacilitiesWithGemini(query, location, categoryFilter);
+    return res.json(result);
+  } catch (err: any) {
+    console.error('Maps nearby search error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to search nearby facilities.' });
   }
 });
 

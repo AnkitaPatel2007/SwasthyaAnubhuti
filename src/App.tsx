@@ -10,6 +10,7 @@ import { RewardsStore } from './components/RewardsStore.tsx';
 import { ArogyaSaathiPopup } from './components/ArogyaSaathiPopup.tsx';
 import { DailyCheckinModal } from './components/DailyCheckinModal.tsx';
 import { ProfileModal } from './components/ProfileModal.tsx';
+import { EmergencyCallModal } from './components/EmergencyCallModal.tsx';
 import { apiClient } from './services/api.ts';
 import {
   UserProfile,
@@ -52,6 +53,7 @@ export default function App() {
   const [isCheckinOpen, setIsCheckinOpen] = useState<boolean>(false);
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
   const [isArogyaPopupOpen, setIsArogyaPopupOpen] = useState<boolean>(false);
+  const [isCallModalOpen, setIsCallModalOpen] = useState<boolean>(false);
 
   // Fetch data on mount
   useEffect(() => {
@@ -292,6 +294,7 @@ export default function App() {
         onOpenProfile={() => setIsProfileOpen(true)}
         onToggleArogyaPopup={() => setIsArogyaPopupOpen(!isArogyaPopupOpen)}
         isArogyaPopupOpen={isArogyaPopupOpen}
+        onOpenCallModal={() => setIsCallModalOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -464,6 +467,12 @@ export default function App() {
           setIsArogyaPopupOpen(false);
           setCurrentTab('rewards');
         }}
+      />
+
+      {/* Emergency Calling & Connected Phone Contacts Hub */}
+      <EmergencyCallModal
+        isOpen={isCallModalOpen}
+        onClose={() => setIsCallModalOpen(false)}
       />
     </div>
   );

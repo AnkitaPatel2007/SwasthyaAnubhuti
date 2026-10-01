@@ -31,6 +31,38 @@
   animation: ecgPulse 4s linear infinite;
 }
 
+@keyframes heartbeat {
+  0% { transform: scale(1); }
+  14% { transform: scale(1.14); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.08); }
+  70% { transform: scale(1); }
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1.3s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes waterWave {
+  0% { transform: translateX(0) translateZ(0) scaleY(1); }
+  50% { transform: translateX(-25%) translateZ(0) scaleY(0.85); }
+  100% { transform: translateX(-50%) translateZ(0) scaleY(1); }
+}
+
+.animate-water-wave {
+  animation: waterWave 3s linear infinite;
+}
+
+@keyframes floatGentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-float {
+  animation: floatGentle 2.5s ease-in-out infinite;
+}
+
 /* Custom scrollbar for clinical sleekness */
 ::-webkit-scrollbar {
   width: 6px;

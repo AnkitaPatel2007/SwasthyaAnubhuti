@@ -25,6 +25,7 @@ interface NavbarProps {
   onOpenProfile: () => void;
   onToggleArogyaPopup: () => void;
   isArogyaPopupOpen: boolean;
+  onOpenCallModal: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -37,6 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenProfile,
   onToggleArogyaPopup,
   isArogyaPopupOpen,
+  onOpenCallModal,
 }) => {
   const navItems = [
     { id: 'dashboard', label: 'Clinical Vitals', icon: Activity },
@@ -64,10 +66,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         <div className="flex items-center gap-3 text-slate-400">
           <span className="hidden md:inline">HIPAA / GDPR Isolation Active</span>
-          <div className="flex items-center gap-1 text-rose-400 font-medium">
-            <PhoneCall className="w-3 h-3" />
-            <span>Emergency: 911 / 988</span>
-          </div>
+          <button
+            onClick={onOpenCallModal}
+            className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white border border-rose-500/40 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer active:scale-95 shadow-2xs"
+            title="Open Emergency Calling Hub & Connect Phone Contacts"
+          >
+            <PhoneCall className="w-3 h-3 text-rose-400 animate-pulse" />
+            <span>Call / Emergency Contacts</span>
+          </button>
         </div>
       </div>
 

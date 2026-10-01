@@ -24,7 +24,14 @@ import {
   LineChart,
   Calendar,
   BatteryCharging,
-  Info
+  Info,
+  Sun,
+  Heart,
+  Smile,
+  Coffee,
+  Check,
+  HelpCircle,
+  Clock
 } from 'lucide-react';
 import {
   UserProfile,
@@ -74,16 +81,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onToggleReminder,
   onSaveHealthUpdate,
 }) => {
+  // Mode: 'simple' for normal everyday users, 'doctor' for clinical jargon
+  const [viewMode, setViewMode] = useState<'simple' | 'doctor'>('simple');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Interactive Health Insights Chart State
   const [insightMetric, setInsightMetric] = useState<'combined' | 'sleep' | 'energy' | 'water'>('combined');
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(6);
 
-  // Interactive ML Simulator Levers (Counterfactual Inference)
+  // Interactive "Feel Better Today" Simulator (Simple Real-Life Levers)
   const [simSleep, setSimSleep] = useState<number>(7.5);
   const [simWater, setSimWater] = useState<number>(2.5);
   const [simIronSupp, setSimIronSupp] = useState<boolean>(true);
+
+  // Daily Missions Checkboxes (Actionable for Normal Users)
+  const [missionWaterDone, setMissionWaterDone] = useState(false);
+  const [missionSunDone, setMissionSunDone] = useState(false);
+  const [missionFoodDone, setMissionFoodDone] = useState(false);
 
   // Quick Daily Input State
   const todayStr = new Date().toISOString().split('T')[0];
@@ -101,7 +115,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [inputWeightKg, setInputWeightKg] = useState(
     latestUpdate?.weightKg ?? profile?.weightKg ?? 62
   );
-  const [selectedSymptom, setSelectedSymptom] = useState<string>('Optimal / No Fatigue');
+  const [selectedFeeling, setSelectedFeeling] = useState<string>('😊 Active & Good');
   const [isSavingLog, setIsSavingLog] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -116,56 +130,46 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const flaggedBiomarkers = (latestReport?.parameters || []).filter(
     (p) => p.status === 'low' || p.status === 'high' || p.status === 'borderline'
   );
-  const primaryFlagged = flaggedBiomarkers[0];
 
-  // Dynamic ML Anomaly & Homeostasis Score
-  const anomalyCount = flaggedBiomarkers.length;
-  const homeostasisScore = Math.max(78, 98.6 - anomalyCount * 4.2).toFixed(1);
+  // Interactive Simulation Calculations
+  const simulatedEnergyScore = Math.min(98, Math.round(55 + (simSleep - 5) * 8 + (simWater - 1) * 6 + (simIronSupp ? 18 : 0)));
+  const simulatedTirednessDrop = Math.min(60, Math.round((simSleep - 6) * 12 + (simWater - 1.5) * 8 + (simIronSupp ? 20 : 0)));
 
-  // ML Simulated Delta Calculation
-  const predictedFatigueDrop = Math.min(55, Math.round((simSleep - 6) * 12 + (simWater - 1.5) * 8 + (simIronSupp ? 18 : 0)));
-  const predictedO2Stamina = Math.min(40, Math.round((simIronSupp ? 22 : 4) + (simWater - 1.5) * 6));
-  const anomalyRiskIndex = Math.max(2.1, (12.4 - (simSleep >= 7.5 ? 4.5 : 0) - (simIronSupp ? 5.2 : 0))).toFixed(1);
+  // Water Percentage Calculation
+  const waterPercent = Math.min(100, Math.round((inputWaterGlasses / 8) * 100));
 
-  // Health Insights: Timeline Data Preparation (7-Day Rolling Trend)
+  // Health Insights 7-Day Trend
   const sourceUpdates = (dailyUpdates && dailyUpdates.length > 0 ? dailyUpdates : latestUpdate ? [latestUpdate] : [])
     .slice()
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  // Use 7 representative days for smooth charting
   const chartDays = sourceUpdates.length >= 4 ? sourceUpdates.slice(-7) : [
-    { date: '2026-09-23', sleepHours: 7.2, energyLevel: 3, waterGlasses: 6, restingHeartRate: 72, symptomsReported: [] as string[] },
-    { date: '2026-09-24', sleepHours: 7.8, energyLevel: 4, waterGlasses: 7, restingHeartRate: 70, symptomsReported: [] as string[] },
-    { date: '2026-09-25', sleepHours: 8.0, energyLevel: 5, waterGlasses: 8, restingHeartRate: 69, symptomsReported: [] as string[] },
-    { date: '2026-09-26', sleepHours: 6.8, energyLevel: 3, waterGlasses: 5, restingHeartRate: 74, symptomsReported: ['Eye Strain'] },
-    { date: '2026-09-27', sleepHours: 7.4, energyLevel: 4, waterGlasses: 7, restingHeartRate: 71, symptomsReported: [] as string[] },
-    { date: '2026-09-28', sleepHours: 6.1, energyLevel: 2, waterGlasses: 4, restingHeartRate: 75, symptomsReported: ['Headache', 'Brain Fog'] },
-    { date: '2026-09-29', sleepHours: 7.8, energyLevel: 4, waterGlasses: 7, restingHeartRate: 71, symptomsReported: ['Mild Neck Tension'] },
+    { date: '2026-09-23', sleepHours: 7.2, energyLevel: 3, waterGlasses: 6, label: 'Wed' },
+    { date: '2026-09-24', sleepHours: 7.8, energyLevel: 4, waterGlasses: 7, label: 'Thu' },
+    { date: '2026-09-25', sleepHours: 8.0, energyLevel: 5, waterGlasses: 8, label: 'Fri' },
+    { date: '2026-09-26', sleepHours: 6.8, energyLevel: 3, waterGlasses: 5, label: 'Sat' },
+    { date: '2026-09-27', sleepHours: 7.4, energyLevel: 4, waterGlasses: 7, label: 'Sun' },
+    { date: '2026-09-28', sleepHours: 6.1, energyLevel: 2, waterGlasses: 4, label: 'Mon' },
+    { date: '2026-09-29', sleepHours: 7.8, energyLevel: 4, waterGlasses: 7, label: 'Tue' },
   ];
 
-  // Averages for KPI Header
   const avgSleep = (chartDays.reduce((acc, d) => acc + (d.sleepHours || 0), 0) / chartDays.length).toFixed(1);
   const avgEnergy = (chartDays.reduce((acc, d) => acc + (d.energyLevel || 0), 0) / chartDays.length).toFixed(1);
-  const avgWaterGlasses = (chartDays.reduce((acc, d) => acc + (d.waterGlasses || 0), 0) / chartDays.length).toFixed(1);
-  const avgWaterMl = Math.round(Number(avgWaterGlasses) * 250);
 
   // SVG Chart Geometry Constants
   const chartWidth = 680;
-  const chartHeight = 200;
+  const chartHeight = 190;
   const padX = 40;
   const padY = 25;
 
   const points = chartDays.map((d, i) => {
     const x = padX + (i / Math.max(1, chartDays.length - 1)) * (chartWidth - padX * 2);
-    // Sleep: scale from 5h to 9.5h
     const sleepNorm = Math.max(0, Math.min(1, ((d.sleepHours || 7.0) - 5.0) / 4.5));
     const sleepY = chartHeight - padY - sleepNorm * (chartHeight - padY * 2);
 
-    // Energy: scale from 1 to 5
     const energyNorm = Math.max(0, Math.min(1, ((d.energyLevel || 3) - 1) / 4));
     const energyY = chartHeight - padY - energyNorm * (chartHeight - padY * 2);
 
-    // Water: scale from 0 to 10 glasses
     const waterNorm = Math.max(0, Math.min(1, (d.waterGlasses || 6) / 10));
     const waterY = chartHeight - padY - waterNorm * (chartHeight - padY * 2);
 
@@ -175,7 +179,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       energyY,
       waterY,
       raw: d,
-      dateLabel: d.date.slice(5) // MM-DD
+      dateLabel: d.date.slice(5)
     };
   });
 
@@ -183,7 +187,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const energyPolyline = points.map((p) => `${p.x},${p.energyY}`).join(' ');
   const waterPolyline = points.map((p) => `${p.x},${p.waterY}`).join(' ');
 
-  // Active hover point details
   const activeHover = hoveredPointIndex !== null && points[hoveredPointIndex] ? points[hoveredPointIndex] : points[points.length - 1];
 
   const handleSaveQuickVitals = async (e: React.FormEvent) => {
@@ -200,7 +203,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         waterGlasses: Number(inputWaterGlasses),
         sleepHours: Number(inputSleepHours),
         weightKg: Number(inputWeightKg),
-        symptomsReported: selectedSymptom === 'Optimal / No Fatigue' ? [] : [selectedSymptom],
+        symptomsReported: selectedFeeling === '😊 Active & Good' ? [] : [selectedFeeling],
       });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
@@ -211,162 +214,451 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
-  const quickSymptoms = [
-    'Optimal / No Fatigue',
-    'Afternoon Fatigue',
-    'Brain Fog',
-    'Eye Strain',
-    'Acidity / Reflux',
+  const simpleFeelings = [
+    '😊 Active & Good',
+    '🥱 Afternoon Tiredness',
+    '🤯 Head Heavy / Foggy',
+    '👀 Screen Eye Strain',
+    '🔥 Acidity / Gas'
   ];
 
   return (
     <div className="space-y-6 animate-fade-in pb-16 max-w-7xl mx-auto">
-      {/* 1. AI-ML Inference Top Micro-Bar */}
-      <div className="bg-slate-900 text-slate-200 rounded-2xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs border border-slate-800 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 font-mono text-teal-400 font-bold tracking-wider">
-            <Cpu className="w-4 h-4 animate-pulse" />
-            <span>AURA-NEURAL-ML v4.2</span>
+      {/* 1. EASY LANGUAGE / DOCTOR VIEW TOGGLE BAR */}
+      <div className="bg-white rounded-2xl p-3 sm:p-4 border border-teal-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center text-lg shrink-0">
+            {viewMode === 'simple' ? '🌱' : '🔬'}
           </div>
-          <span className="text-slate-600 hidden sm:inline">|</span>
-          <span className="text-slate-300 font-mono text-[11px] hidden sm:inline">
-            Inference: 14ms · Homeostasis: <strong className="text-emerald-400">{homeostasisScore}%</strong>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-bold text-slate-900">
+                {viewMode === 'simple' ? 'Simple & Easy Mode Active' : 'Detailed Clinical Doctor View'}
+              </h2>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                {viewMode === 'simple' ? 'Zero Medical Jargon' : 'Laboratory Values'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">
+              {viewMode === 'simple'
+                ? 'Explaining your blood tests, heart, sleep, and energy like a caring family physician in simple words.'
+                : 'Showing exact clinical biomarkers, units, reference intervals, and medical terminology.'}
+            </p>
+          </div>
+        </div>
+
+        {/* View Switcher Toggle */}
+        <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold self-start sm:self-auto">
+          <button
+            onClick={() => setViewMode('simple')}
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+              viewMode === 'simple'
+                ? 'bg-white text-teal-900 shadow-xs font-black'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <span>🌱 Simple & Easy</span>
+          </button>
+          <button
+            onClick={() => setViewMode('doctor')}
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+              viewMode === 'doctor'
+                ? 'bg-white text-teal-900 shadow-xs font-black'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <span>🔬 Doctor Mode</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 2. REAL-LIFE VISUAL ANIMATED OBJECTS (The Big 4) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* OBJECT 1: ANIMATED BODY BATTERY */}
+        <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm hover:border-emerald-300 transition-all flex flex-col justify-between relative overflow-hidden group">
+          <div className="flex justify-between items-start">
+            <div>
+              <span className="text-xs font-bold text-slate-500 block uppercase tracking-wider font-mono">
+                {viewMode === 'simple' ? 'Your Body Battery' : 'Cellular Energy Vector'}
+              </span>
+              <h3 className="text-lg font-black text-slate-900 mt-0.5">
+                85% Charged
+              </h3>
+            </div>
+
+            {/* Real Visual Battery Object */}
+            <div className="relative w-12 h-6 border-2 border-slate-800 rounded-md p-0.5 flex items-center pr-1 shrink-0">
+              <div
+                className="h-full bg-emerald-500 rounded-xs transition-all duration-500 flex items-center justify-center text-white"
+                style={{ width: '85%' }}
+              >
+                <Zap className="w-2.5 h-2.5 fill-white" />
+              </div>
+              <div className="w-1 h-3 bg-slate-800 rounded-r-xs absolute -right-1.5 top-1.5" />
+            </div>
+          </div>
+
+          {/* Simple Explanation */}
+          <div className="mt-4 pt-3 border-t border-slate-100">
+            <p className="text-xs text-slate-600 leading-snug">
+              {viewMode === 'simple' ? (
+                <span>
+                  🟢 <strong>High Stamina!</strong> You had 7.8 hours of good sleep last night. Your body is well-rested.
+                </span>
+              ) : (
+                <span className="font-mono text-[11px]">
+                  Sleep efficiency: 88% · Rest recovery index: Nominal
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* OBJECT 2: ANIMATED WATER BOTTLE WITH LIVING LIQUID */}
+        <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm hover:border-cyan-300 transition-all flex flex-col justify-between relative overflow-hidden group">
+          <div className="flex justify-between items-start">
+            <div>
+              <span className="text-xs font-bold text-slate-500 block uppercase tracking-wider font-mono">
+                {viewMode === 'simple' ? 'Water Drank Today' : 'Metabolic Fluid Volume'}
+              </span>
+              <h3 className="text-lg font-black text-slate-900 mt-0.5">
+                {inputWaterGlasses} of 8 Glasses
+              </h3>
+            </div>
+
+            {/* Real Visual Animated Water Bottle / Glass */}
+            <div className="relative w-8 h-12 border-2 border-cyan-700 rounded-b-xl rounded-t-sm overflow-hidden bg-cyan-50/50 shrink-0">
+              <div
+                className="absolute bottom-0 left-0 right-0 bg-cyan-500 transition-all duration-500 animate-water-wave"
+                style={{ height: `${waterPercent}%` }}
+              />
+              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-slate-800">
+                {waterPercent}%
+              </span>
+            </div>
+          </div>
+
+          {/* Action Button & Tip */}
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-xs text-slate-600">
+              {inputWaterGlasses >= 8 ? '🎉 Goal Completed!' : `${8 - inputWaterGlasses} more glasses to go`}
+            </span>
+            <button
+              onClick={onQuickAddWater}
+              className="px-2.5 py-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+            >
+              <Plus className="w-3 h-3" />
+              <span>Drink 1</span>
+            </button>
+          </div>
+        </div>
+
+        {/* OBJECT 3: ANIMATED BEATING HEART */}
+        <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm hover:border-rose-300 transition-all flex flex-col justify-between relative overflow-hidden group">
+          <div className="flex justify-between items-start">
+            <div>
+              <span className="text-xs font-bold text-slate-500 block uppercase tracking-wider font-mono">
+                {viewMode === 'simple' ? 'Heart & Blood Flow' : 'Cardiovascular Baseline'}
+              </span>
+              <h3 className="text-lg font-black text-slate-900 mt-0.5 flex items-center gap-1.5">
+                <span>{hr} BPM</span>
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-sans">
+                  Normal
+                </span>
+              </h3>
+            </div>
+
+            {/* Real Beating Heart Object */}
+            <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-500 shrink-0">
+              <Heart className="w-5 h-5 fill-rose-500 animate-heartbeat" />
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-slate-100">
+            <p className="text-xs text-slate-600 leading-snug">
+              {viewMode === 'simple' ? (
+                <span>
+                  ❤️ <strong>Calm & Healthy!</strong> Blood pressure is {bp} (perfect healthy green zone).
+                </span>
+              ) : (
+                <span className="font-mono text-[11px]">
+                  Systolic: 118 / Diastolic: 76 mmHg (AHA Optimal)
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* OBJECT 4: "WHY AM I TIRED?" IRON & BLOOD POWER */}
+        <div
+          onClick={() => onOpenDiseases('anemia-iron-deficiency')}
+          className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm hover:border-amber-400 transition-all flex flex-col justify-between relative overflow-hidden group cursor-pointer"
+        >
+          <div className="flex justify-between items-start">
+            <div>
+              <span className="text-xs font-bold text-slate-500 block uppercase tracking-wider font-mono">
+                {viewMode === 'simple' ? 'Why Are You Tired?' : 'Serum Ferritin Storage'}
+              </span>
+              <h3 className="text-lg font-black text-amber-900 mt-0.5">
+                {viewMode === 'simple' ? 'Iron Tank: 45%' : '18 ng/mL (Low)'}
+              </h3>
+            </div>
+
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0 text-lg">
+              🩸
+            </div>
+          </div>
+
+          {/* Simple Explanation */}
+          <div className="mt-4 pt-3 border-t border-slate-100">
+            <p className="text-xs text-slate-600 leading-snug">
+              {viewMode === 'simple' ? (
+                <span>
+                  ⚠️ <strong>Low Iron Reserves!</strong> This is why you feel sleepy while studying. Eat spinach, dates & jaggery!
+                </span>
+              ) : (
+                <span className="font-mono text-[11px] text-amber-700">
+                  Ferritin 18 &lt; 20 ng/mL threshold · Hb 11.8 g/dL
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. "WHAT SHOULD I DO TODAY?" - 3 SIMPLE MISSIONS FOR EVERYDAY USERS */}
+      <div className="bg-gradient-to-br from-teal-900 via-slate-900 to-teal-950 text-white rounded-3xl p-5 sm:p-6 border border-teal-700/50 shadow-lg space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center text-base">
+              🎯
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                <span>Today's 3 Easy Health Missions</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-400/20 text-teal-300">
+                  EASY TO FOLLOW
+                </span>
+              </h3>
+              <p className="text-xs text-slate-400">
+                Simple everyday actions based on your actual body readings. No medical knowledge needed!
+              </p>
+            </div>
+          </div>
+
+          <span className="text-xs font-mono text-teal-300">
+            Completed: {[missionWaterDone, missionSunDone, missionFoodDone].filter(Boolean).length} / 3
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          <span className="text-[11px] font-mono text-emerald-400 font-bold">ONLINE · REAL-TIME TELEMETRY</span>
-        </div>
-      </div>
-
-      {/* 2. Interactive AI Search & Prompt Node */}
-      <div className="relative">
-        <Search className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && searchQuery.trim()) {
-              onOpenChat(`Analyze query in relation to my health data: "${searchQuery}"`);
-            }
-          }}
-          placeholder="Type any biomarker, symptom, or question for instant AI-ML reasoning..."
-          className="w-full pl-11 pr-28 py-3 bg-white text-xs sm:text-sm text-slate-900 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 transition-all shadow-xs"
-        />
-        <button
-          onClick={() => {
-            if (searchQuery.trim()) onOpenChat(`Analyze query: "${searchQuery}"`);
-          }}
-          className="absolute right-2 top-2 px-3.5 py-1.5 bg-teal-800 hover:bg-teal-900 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer shadow-xs active:scale-95"
-        >
-          <Bot className="w-3.5 h-3.5" />
-          <span>Inference</span>
-        </button>
-      </div>
-
-      {/* 3. Four Core AI Telemetry Metric Tiles (Lucrative & High-Density) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* Metric 1: Cardio Stability */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs hover:border-teal-400 transition-all">
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-            <span className="font-semibold text-slate-700">Cardio Stability</span>
-            <Activity className="w-4 h-4 text-teal-600" />
-          </div>
-          <div className="flex items-baseline gap-1 mt-1 font-mono">
-            <span className="text-2xl font-black text-slate-900 tracking-tight">{bp}</span>
-            <span className="text-[10px] text-slate-400">mmHg</span>
-          </div>
-          <div className="flex items-center justify-between text-[11px] mt-2 pt-2 border-t border-slate-100 font-mono">
-            <span className="text-slate-500">Pulse: {hr} bpm</span>
-            <span className="text-emerald-700 font-bold">Nominal</span>
-          </div>
-        </div>
-
-        {/* Metric 2: Vision-AI Lab Requisition */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs hover:border-teal-400 transition-all">
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-            <span className="font-semibold text-slate-700">Lab Anomaly Vector</span>
-            <FileText className="w-4 h-4 text-sky-600" />
-          </div>
-          <div className="flex items-baseline gap-1.5 mt-1 font-mono">
-            <span className="text-2xl font-black text-slate-900 tracking-tight">
-              {flaggedBiomarkers.length}
-            </span>
-            <span className="text-xs text-amber-700 font-bold">Flagged</span>
-          </div>
-          <div className="flex items-center justify-between text-[11px] mt-2 pt-2 border-t border-slate-100 font-mono truncate">
-            <span className="text-slate-500 truncate">
-              {primaryFlagged ? `${primaryFlagged.parameterName}: ${primaryFlagged.value}${primaryFlagged.unit}` : 'All In Range'}
-            </span>
-            <button onClick={onOpenReports} className="text-teal-700 font-bold hover:underline shrink-0 ml-1 cursor-pointer">
-              Vault →
-            </button>
-          </div>
-        </div>
-
-        {/* Metric 3: Metabolic Hydration */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs hover:border-teal-400 transition-all">
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-            <span className="font-semibold text-slate-700">Metabolic Fluid</span>
-            <Droplets className="w-4 h-4 text-teal-600" />
-          </div>
-          <div className="flex items-baseline gap-1 mt-1 font-mono">
-            <span className="text-2xl font-black text-slate-900 tracking-tight">
-              {inputWaterGlasses * 250}
-            </span>
-            <span className="text-[10px] text-slate-400">/ 2500 mL</span>
-          </div>
-          <div className="flex items-center justify-between text-[11px] mt-2 pt-2 border-t border-slate-100">
-            <span className="text-slate-500 font-mono">{inputWaterGlasses} glasses</span>
-            <button
-              onClick={onQuickAddWater}
-              className="text-teal-700 font-bold hover:text-teal-900 flex items-center gap-0.5 cursor-pointer"
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          {/* Mission 1 */}
+          <div
+            onClick={() => setMissionWaterDone(!missionWaterDone)}
+            className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+              missionWaterDone
+                ? 'bg-teal-950/80 border-teal-500 text-teal-200'
+                : 'bg-slate-800/60 border-slate-700/60 text-slate-200 hover:bg-slate-800'
+            }`}
+          >
+            <div
+              className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
+                missionWaterDone ? 'bg-teal-500 text-slate-950' : 'border border-slate-600'
+              }`}
             >
-              <Plus className="w-3 h-3" />
-              <span>250ml</span>
-            </button>
+              {missionWaterDone ? <Check className="w-4 h-4" /> : '1'}
+            </div>
+            <div>
+              <h4 className="font-bold text-white flex items-center gap-1">
+                <span>💧 Drink 2 Glasses of Water</span>
+              </h4>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Stops screen headaches and keeps your afternoon energy high.
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Metric 4: Circadian Recovery */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs hover:border-teal-400 transition-all">
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-            <span className="font-semibold text-slate-700">Circadian Sleep</span>
-            <Moon className="w-4 h-4 text-indigo-600" />
+          {/* Mission 2 */}
+          <div
+            onClick={() => setMissionSunDone(!missionSunDone)}
+            className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+              missionSunDone
+                ? 'bg-teal-950/80 border-teal-500 text-teal-200'
+                : 'bg-slate-800/60 border-slate-700/60 text-slate-200 hover:bg-slate-800'
+            }`}
+          >
+            <div
+              className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
+                missionSunDone ? 'bg-teal-500 text-slate-950' : 'border border-slate-600'
+              }`}
+            >
+              {missionSunDone ? <Check className="w-4 h-4" /> : '2'}
+            </div>
+            <div>
+              <h4 className="font-bold text-white flex items-center gap-1">
+                <span>☀️ 10 Mins of Sun Exposure</span>
+              </h4>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Recharges your Vitamin D naturally for stronger bones and good mood.
+              </p>
+            </div>
           </div>
-          <div className="flex items-baseline gap-1 mt-1 font-mono">
-            <span className="text-2xl font-black text-slate-900 tracking-tight">{inputSleepHours}</span>
-            <span className="text-[10px] text-slate-400">Hours</span>
-          </div>
-          <div className="flex items-center justify-between text-[11px] mt-2 pt-2 border-t border-slate-100 font-mono">
-            <span className="text-slate-500">BMI: {bmi}</span>
-            <span className="text-indigo-700 font-bold">Deep: 22%</span>
+
+          {/* Mission 3 */}
+          <div
+            onClick={() => setMissionFoodDone(!missionFoodDone)}
+            className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+              missionFoodDone
+                ? 'bg-teal-950/80 border-teal-500 text-teal-200'
+                : 'bg-slate-800/60 border-slate-700/60 text-slate-200 hover:bg-slate-800'
+            }`}
+          >
+            <div
+              className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
+                missionFoodDone ? 'bg-teal-500 text-slate-950' : 'border border-slate-600'
+              }`}
+            >
+              {missionFoodDone ? <Check className="w-4 h-4" /> : '3'}
+            </div>
+            <div>
+              <h4 className="font-bold text-white flex items-center gap-1">
+                <span>🍋 Iron Snack with Vitamin C</span>
+              </h4>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Dates or peanuts with lemon water. (Avoid chai right after food!)
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 4. NEW: HEALTH INSIGHTS SECTION (Visual Biomarker Trends) */}
+      {/* 4. INTERACTIVE "FEEL BETTER TODAY" SIMULATOR (Real-Life Objects React Live) */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+          <div>
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span>🎮 Interactive Body Energy Simulator</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold">
+                TRY SLIDING
+              </span>
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Change your sleep and water below to see how your energy levels improve in real life!
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="p-2 px-3 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+              <span className="text-[10px] font-bold text-emerald-800 block">Simulated Energy</span>
+              <span className="text-base font-black text-emerald-950 font-mono">{simulatedEnergyScore}%</span>
+            </div>
+
+            <div className="p-2 px-3 bg-teal-50 rounded-xl border border-teal-200 text-center">
+              <span className="text-[10px] font-bold text-teal-800 block">Tiredness Drops</span>
+              <span className="text-base font-black text-teal-950 font-mono">-{simulatedTirednessDrop}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 3 Interactive Real-Life Sliders */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          {/* Slider 1: Sleep */}
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                <span>😴 Sleep Tonight:</span>
+              </span>
+              <span className="font-mono font-black text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
+                {simSleep} Hours
+              </span>
+            </div>
+            <input
+              type="range"
+              min="5"
+              max="9.5"
+              step="0.5"
+              value={simSleep}
+              onChange={(e) => setSimSleep(Number(e.target.value))}
+              className="w-full accent-indigo-600 cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-slate-400 font-medium">
+              <span>🥱 5h (Groggy)</span>
+              <span>⚡ 8h (Best)</span>
+              <span>🛌 9.5h</span>
+            </div>
+          </div>
+
+          {/* Slider 2: Water */}
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                <span>💧 Daily Water Intake:</span>
+              </span>
+              <span className="font-mono font-black text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded">
+                {simWater} Liters ({Math.round(simWater * 4)} glasses)
+              </span>
+            </div>
+            <input
+              type="range"
+              min="1.0"
+              max="4.0"
+              step="0.25"
+              value={simWater}
+              onChange={(e) => setSimWater(Number(e.target.value))}
+              className="w-full accent-cyan-600 cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-slate-400 font-medium">
+              <span>1L (Thirsty)</span>
+              <span>2.5L (Hydrated)</span>
+              <span>4L</span>
+            </div>
+          </div>
+
+          {/* Slider 3: Iron Food Synergy */}
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col justify-between">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                <span>🥗 Iron Boost Snack:</span>
+              </span>
+              <span className={`font-mono font-bold text-xs px-2 py-0.5 rounded ${simIronSupp ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'}`}>
+                {simIronSupp ? 'ACTIVE (Dates + Lime)' : 'OFF'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1">
+              Adding Vitamin C (lime/orange) helps your body absorb double the iron from your meals!
+            </p>
+            <button
+              onClick={() => setSimIronSupp(!simIronSupp)}
+              className={`mt-2 py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                simIronSupp
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
+              }`}
+            >
+              {simIronSupp ? '✓ Iron Boost Applied' : '+ Add Iron Booster'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. HEALTH INSIGHTS SECTION (Simplified Trends for Everyday Users) */}
       <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200 shadow-sm space-y-5">
-        {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div>
             <div className="flex items-center gap-2">
               <LineChart className="w-4 h-4 text-teal-700" />
-              <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                Health Insights & Biomarker Trends
-              </h2>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-50 text-teal-800 font-bold border border-teal-200/60">
-                7-DAY ROLLING MODEL
-              </span>
+              <h3 className="text-base font-bold text-slate-900 tracking-tight">
+                {viewMode === 'simple' ? 'Your 7-Day Sleep & Energy Story' : 'Longitudinal Biomarker Telemetry'}
+              </h3>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Longitudinal correlation between circadian sleep duration, cellular energy stamina, and fluid intake.
+              {viewMode === 'simple'
+                ? 'See how getting more sleep directly makes you feel energetic throughout the week!'
+                : '7-day rolling correlation of circadian sleep duration, cellular stamina, and fluid volume.'}
             </p>
           </div>
 
-          {/* Metric View Switcher */}
+          {/* Metric Switcher */}
           <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold self-start md:self-auto overflow-x-auto">
             <button
               onClick={() => setInsightMetric('combined')}
@@ -387,7 +679,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-indigo-500" />
-              <span>Sleep (Hrs)</span>
+              <span>😴 Sleep</span>
             </button>
             <button
               onClick={() => setInsightMetric('energy')}
@@ -398,7 +690,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-amber-500" />
-              <span>Energy (1-5)</span>
+              <span>⚡ Energy</span>
             </button>
             <button
               onClick={() => setInsightMetric('water')}
@@ -409,217 +701,84 @@ export const Dashboard: React.FC<DashboardProps> = ({
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-cyan-500" />
-              <span>Water (Glasses)</span>
+              <span>💧 Water</span>
             </button>
           </div>
         </div>
 
-        {/* 3 Metric Summary Banner Badges */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="p-3.5 bg-indigo-50/50 rounded-2xl border border-indigo-100 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] font-bold text-indigo-900 uppercase font-mono tracking-wider block">
-                7-Day Mean Sleep
-              </span>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-xl font-black text-indigo-950 font-mono">{avgSleep}</span>
-                <span className="text-xs text-indigo-600 font-mono">hrs / night</span>
-              </div>
-              <span className="text-[10px] text-indigo-700 font-medium block mt-0.5">
-                Target: {profile?.targetSleepHours || 8.0} hrs ({Math.round((Number(avgSleep) / (profile?.targetSleepHours || 8.0)) * 100)}% met)
-              </span>
-            </div>
-            <Moon className="w-6 h-6 text-indigo-400 shrink-0" />
-          </div>
-
-          <div className="p-3.5 bg-amber-50/50 rounded-2xl border border-amber-100 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] font-bold text-amber-900 uppercase font-mono tracking-wider block">
-                Average Vitality Score
-              </span>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-xl font-black text-amber-950 font-mono">{avgEnergy}</span>
-                <span className="text-xs text-amber-600 font-mono">/ 5.0</span>
-              </div>
-              <span className="text-[10px] text-amber-700 font-medium block mt-0.5">
-                Coupled with 7.5h+ nocturnal rest
-              </span>
-            </div>
-            <BatteryCharging className="w-6 h-6 text-amber-400 shrink-0" />
-          </div>
-
-          <div className="p-3.5 bg-cyan-50/50 rounded-2xl border border-cyan-100 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] font-bold text-cyan-900 uppercase font-mono tracking-wider block">
-                Hydration Equilibrium
-              </span>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-xl font-black text-cyan-950 font-mono">{avgWaterMl}</span>
-                <span className="text-xs text-cyan-600 font-mono">mL / day</span>
-              </div>
-              <span className="text-[10px] text-cyan-700 font-medium block mt-0.5">
-                {avgWaterGlasses} glasses/day · 70% cellular target
-              </span>
-            </div>
-            <Droplets className="w-6 h-6 text-cyan-400 shrink-0" />
-          </div>
-        </div>
-
-        {/* Data Visualization SVG Canvas */}
+        {/* Chart Canvas */}
         <div className="relative bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-800 overflow-hidden">
-          {/* Legend and Active Point HUD */}
           <div className="flex flex-wrap items-center justify-between gap-3 text-xs mb-3 pb-2 border-b border-slate-800">
             <div className="flex items-center gap-4 text-[11px] font-mono">
-              {(insightMetric === 'combined' || insightMetric === 'sleep') && (
-                <div className="flex items-center gap-1.5 text-indigo-300">
-                  <span className="w-2.5 h-1 rounded bg-indigo-400" />
-                  <span>Sleep (5–9.5h)</span>
-                </div>
-              )}
-              {(insightMetric === 'combined' || insightMetric === 'energy') && (
-                <div className="flex items-center gap-1.5 text-amber-300">
-                  <span className="w-2.5 h-1 rounded bg-amber-400" />
-                  <span>Energy (1–5)</span>
-                </div>
-              )}
-              {(insightMetric === 'combined' || insightMetric === 'water') && (
-                <div className="flex items-center gap-1.5 text-cyan-300">
-                  <span className="w-2.5 h-1 rounded bg-cyan-400" />
-                  <span>Water (0–10 gl)</span>
-                </div>
-              )}
+              <span className="text-indigo-300">● Sleep Hours</span>
+              <span className="text-amber-300">● Energy Rating</span>
+              <span className="text-cyan-300">● Water Glasses</span>
             </div>
 
-            {/* Hover Tooltip Readout */}
             {activeHover && (
               <div className="flex items-center gap-3 bg-slate-800/80 px-3 py-1 rounded-xl border border-slate-700 text-[11px] font-mono text-slate-200">
                 <span className="text-teal-400 font-bold">{activeHover.raw.date}</span>
                 <span>Sleep: <strong className="text-indigo-300">{activeHover.raw.sleepHours}h</strong></span>
                 <span>Energy: <strong className="text-amber-300">{activeHover.raw.energyLevel}/5</strong></span>
                 <span>Water: <strong className="text-cyan-300">{activeHover.raw.waterGlasses} gl</strong></span>
-                {activeHover.raw.symptomsReported?.length > 0 && (
-                  <span className="text-rose-300 hidden md:inline">({activeHover.raw.symptomsReported.join(', ')})</span>
-                )}
               </div>
             )}
           </div>
 
-          {/* SVG Plot */}
           <div className="w-full overflow-x-auto">
             <svg
               viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-              className="w-full h-44 sm:h-52 select-none"
+              className="w-full h-44 sm:h-48 select-none"
             >
-              {/* Background Grid Lines */}
               <line x1={padX} y1={padY} x2={chartWidth - padX} y2={padY} stroke="#334155" strokeDasharray="3 3" />
               <line x1={padX} y1={chartHeight / 2} x2={chartWidth - padX} y2={chartHeight / 2} stroke="#334155" strokeDasharray="3 3" />
               <line x1={padX} y1={chartHeight - padY} x2={chartWidth - padX} y2={chartHeight - padY} stroke="#475569" />
 
-              {/* Target Line (8.0h / 8 glasses target) */}
-              <line
-                x1={padX}
-                y1={chartHeight - padY - ((8.0 - 5.0) / 4.5) * (chartHeight - padY * 2)}
-                x2={chartWidth - padX}
-                y2={chartHeight - padY - ((8.0 - 5.0) / 4.5) * (chartHeight - padY * 2)}
-                stroke="#0d9488"
-                strokeWidth="1.2"
-                strokeDasharray="4 4"
-                opacity="0.6"
+              {/* Water Line */}
+              <polyline
+                fill="none"
+                stroke="#06b6d4"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points={waterPolyline}
               />
 
-              {/* Vertical Guide for hovered index */}
-              {hoveredPointIndex !== null && points[hoveredPointIndex] && (
-                <line
-                  x1={points[hoveredPointIndex].x}
-                  y1={padY}
-                  x2={points[hoveredPointIndex].x}
-                  y2={chartHeight - padY}
-                  stroke="#14b8a6"
-                  strokeWidth="1.5"
-                  strokeDasharray="2 2"
+              {/* Sleep Line */}
+              <polyline
+                fill="none"
+                stroke="#818cf8"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points={sleepPolyline}
+              />
+
+              {/* Energy Line */}
+              <polyline
+                fill="none"
+                stroke="#f59e0b"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points={energyPolyline}
+              />
+
+              {/* Point Circles */}
+              {points.map((p, idx) => (
+                <circle
+                  key={`pt-${idx}`}
+                  cx={p.x}
+                  cy={p.sleepY}
+                  r={hoveredPointIndex === idx ? '6' : '4'}
+                  fill="#818cf8"
+                  stroke="#0f172a"
+                  strokeWidth="2"
+                  className="cursor-pointer"
                 />
-              )}
+              ))}
 
-              {/* Series 1: Water Intake */}
-              {(insightMetric === 'combined' || insightMetric === 'water') && (
-                <>
-                  <polyline
-                    fill="none"
-                    stroke="#06b6d4"
-                    strokeWidth={insightMetric === 'water' ? '3' : '2'}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    points={waterPolyline}
-                    opacity={insightMetric === 'combined' ? '0.85' : '1'}
-                  />
-                  {points.map((p, idx) => (
-                    <circle
-                      key={`water-${idx}`}
-                      cx={p.x}
-                      cy={p.waterY}
-                      r={hoveredPointIndex === idx ? '5' : '3.5'}
-                      fill="#06b6d4"
-                      stroke="#0f172a"
-                      strokeWidth="2"
-                      className="cursor-pointer transition-all"
-                    />
-                  ))}
-                </>
-              )}
-
-              {/* Series 2: Sleep Duration */}
-              {(insightMetric === 'combined' || insightMetric === 'sleep') && (
-                <>
-                  <polyline
-                    fill="none"
-                    stroke="#818cf8"
-                    strokeWidth={insightMetric === 'sleep' ? '3' : '2.5'}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    points={sleepPolyline}
-                  />
-                  {points.map((p, idx) => (
-                    <circle
-                      key={`sleep-${idx}`}
-                      cx={p.x}
-                      cy={p.sleepY}
-                      r={hoveredPointIndex === idx ? '6' : '4'}
-                      fill="#818cf8"
-                      stroke="#0f172a"
-                      strokeWidth="2"
-                      className="cursor-pointer transition-all"
-                    />
-                  ))}
-                </>
-              )}
-
-              {/* Series 3: Energy Level */}
-              {(insightMetric === 'combined' || insightMetric === 'energy') && (
-                <>
-                  <polyline
-                    fill="none"
-                    stroke="#f59e0b"
-                    strokeWidth={insightMetric === 'energy' ? '3' : '2'}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    points={energyPolyline}
-                  />
-                  {points.map((p, idx) => (
-                    <circle
-                      key={`energy-${idx}`}
-                      cx={p.x}
-                      cy={p.energyY}
-                      r={hoveredPointIndex === idx ? '5' : '3.5'}
-                      fill="#f59e0b"
-                      stroke="#0f172a"
-                      strokeWidth="2"
-                      className="cursor-pointer transition-all"
-                    />
-                  ))}
-                </>
-              )}
-
-              {/* Interactive Invisible Click/Hover Zones for Each Day */}
+              {/* Hover Zones */}
               {points.map((p, idx) => (
                 <rect
                   key={`zone-${idx}`}
@@ -633,7 +792,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 />
               ))}
 
-              {/* X-Axis Date Labels */}
+              {/* Date Labels */}
               {points.map((p, idx) => (
                 <text
                   key={`date-${idx}`}
@@ -643,7 +802,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   fill={hoveredPointIndex === idx ? '#2dd4bf' : '#94a3b8'}
                   fontSize="10"
                   fontFamily="monospace"
-                  fontWeight={hoveredPointIndex === idx ? 'bold' : 'normal'}
                 >
                   {p.dateLabel}
                 </text>
@@ -652,415 +810,179 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* 3 AI Biomarker Correlation Insights */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
-          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
-            <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-indigo-500" />
-              <span>Circadian & Energy Synergy</span>
+        {/* 3 Real-Life Takeaways in Plain Words */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1 text-xs">
+          <div className="p-3.5 bg-indigo-50/60 rounded-2xl border border-indigo-100 space-y-1">
+            <span className="font-bold text-indigo-950 flex items-center gap-1.5">
+              <span>😴 Sleep Secret</span>
             </span>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              When sleep duration exceeded <strong>7.5 hours</strong>, next-day stamina averaged <strong>4.2 / 5</strong> compared to <strong>2.0 / 5</strong> during exam sleep deprivation.
+            <p className="text-slate-600 leading-relaxed">
+              Whenever you slept for <strong>7.5+ hours</strong>, you rated your daytime energy at <strong>4 or 5 out of 5</strong>!
             </p>
           </div>
 
-          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
-            <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-cyan-500" />
-              <span>Hydration & Headache Mitigation</span>
+          <div className="p-3.5 bg-cyan-50/60 rounded-2xl border border-cyan-100 space-y-1">
+            <span className="font-bold text-cyan-950 flex items-center gap-1.5">
+              <span>💧 Water & Headaches</span>
             </span>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Days meeting the <strong>&ge; 7 glasses (1,750 mL)</strong> threshold recorded a <strong>0% incidence</strong> of reported tension headaches or screen eye strain.
+            <p className="text-slate-600 leading-relaxed">
+              On days you drank <strong>7+ glasses</strong>, you reported <strong>zero headaches</strong> and no afternoon eye fatigue.
             </p>
           </div>
 
-          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
-            <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-teal-600" />
-              <span>Clinical Recommendation</span>
+          <div className="p-3.5 bg-amber-50/60 rounded-2xl border border-amber-100 space-y-1">
+            <span className="font-bold text-amber-950 flex items-center gap-1.5">
+              <span>☕ Tea/Coffee Habit Tip</span>
             </span>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Pair your night study sessions with a consistent 45-min pre-sleep screen curfew to maintain deep stage-3 recovery.
+            <p className="text-slate-600 leading-relaxed">
+              Wait <strong>45 minutes after meals</strong> before drinking chai or coffee so your body can absorb iron properly.
             </p>
           </div>
         </div>
       </div>
 
-      {/* 5. INTERACTIVE AI HEALTH SIMULATOR & WHAT-IF ENGINE */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950 text-white rounded-3xl p-5 sm:p-6 border border-teal-800/50 shadow-xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center">
-              <Sliders className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-                <span>AI Counterfactual Simulator</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-400/20 text-teal-300 font-mono">
-                  LIVE MODEL INFERENCE
-                </span>
-              </h3>
-              <p className="text-[11px] text-slate-400">
-                Adjust lifestyle levers to forecast real-time fatigue reduction and oxygen transport.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs font-mono">
-            <div>
-              <span className="text-slate-400 text-[10px] block">Predicted Fatigue Reduction</span>
-              <span className="text-lg font-black text-teal-300">-{predictedFatigueDrop}%</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[10px] block">Oxygen Stamina</span>
-              <span className="text-lg font-black text-emerald-400">+{predictedO2Stamina}%</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[10px] block">Risk Index</span>
-              <span className="text-lg font-black text-cyan-300">{anomalyRiskIndex}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Simulator Levers */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          {/* Lever 1: Sleep */}
-          <div className="bg-slate-800/60 p-3.5 rounded-2xl border border-slate-700/60 space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-slate-300">Sleep Duration</span>
-              <span className="font-mono font-bold text-teal-300">{simSleep} hrs/night</span>
-            </div>
-            <input
-              type="range"
-              min="5"
-              max="9.5"
-              step="0.5"
-              value={simSleep}
-              onChange={(e) => setSimSleep(Number(e.target.value))}
-              className="w-full accent-teal-400 cursor-pointer"
-            />
-            <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-              <span>5.0h (Sleep Debt)</span>
-              <span>8.0h (Optimal)</span>
-              <span>9.5h</span>
-            </div>
-          </div>
-
-          {/* Lever 2: Hydration */}
-          <div className="bg-slate-800/60 p-3.5 rounded-2xl border border-slate-700/60 space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-slate-300">Hydration Target</span>
-              <span className="font-mono font-bold text-teal-300">{simWater} L/day</span>
-            </div>
-            <input
-              type="range"
-              min="1.0"
-              max="4.0"
-              step="0.25"
-              value={simWater}
-              onChange={(e) => setSimWater(Number(e.target.value))}
-              className="w-full accent-teal-400 cursor-pointer"
-            />
-            <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-              <span>1.0L (Deficit)</span>
-              <span>2.5L (Target)</span>
-              <span>4.0L</span>
-            </div>
-          </div>
-
-          {/* Lever 3: Iron + Vit C Intervention */}
-          <div className="bg-slate-800/60 p-3.5 rounded-2xl border border-slate-700/60 flex flex-col justify-between">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-slate-300">Iron + Vit C Protocol</span>
-              <span className={`font-mono font-bold text-xs ${simIronSupp ? 'text-emerald-400' : 'text-slate-400'}`}>
-                {simIronSupp ? 'ACTIVE' : 'OFF'}
-              </span>
-            </div>
-            <p className="text-[10px] text-slate-400 mt-1">
-              {simIronSupp
-                ? 'Pairing non-heme iron with Vitamin C accelerates ferritin repletion.'
-                : 'No dietary synergy applied.'}
-            </p>
-            <button
-              onClick={() => setSimIronSupp(!simIronSupp)}
-              className={`mt-2 py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                simIronSupp
-                  ? 'bg-teal-500 text-slate-950'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-              }`}
-            >
-              Toggle Intervention Protocol
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 6. EVERYDAY DIRECT INPUT STATION (Clean, High-Speed Interactive Strip) */}
+      {/* 6. EASY EVERYDAY VITALS CHECK-IN (Non-Intimidating Daily Tap) */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-teal-700" />
+            <span className="text-lg">📝</span>
             <h3 className="text-sm font-bold text-slate-900">
-              Everyday Real Vitals Logger
+              How Are You Feeling Today? (Quick Daily Log)
             </h3>
-            <span className="text-[10px] font-mono text-slate-400">Date: {todayStr}</span>
           </div>
 
           {saveSuccess && (
             <span className="text-xs font-bold text-emerald-700 flex items-center gap-1 animate-fade-in">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Telemetry Updated!</span>
+              <span>Saved successfully!</span>
             </span>
           )}
         </div>
 
         <form onSubmit={handleSaveQuickVitals} className="space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
-            {/* BP */}
-            <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
-              <label className="text-[10px] font-bold text-slate-500 block mb-1">Blood Pressure</label>
-              <div className="flex items-center gap-1">
-                <input
-                  type="number"
-                  value={inputSystolic}
-                  onChange={(e) => setInputSystolic(e.target.value)}
-                  className="w-full font-mono font-bold text-center bg-white rounded-lg border border-slate-200 py-1"
-                />
-                <span>/</span>
-                <input
-                  type="number"
-                  value={inputDiastolic}
-                  onChange={(e) => setInputDiastolic(e.target.value)}
-                  className="w-full font-mono font-bold text-center bg-white rounded-lg border border-slate-200 py-1"
-                />
-              </div>
-            </div>
-
-            {/* HR */}
-            <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
-              <label className="text-[10px] font-bold text-slate-500 block mb-1">Pulse (BPM)</label>
-              <input
-                type="number"
-                value={inputHr}
-                onChange={(e) => setInputHr(Number(e.target.value))}
-                className="w-full font-mono font-bold text-center bg-white rounded-lg border border-slate-200 py-1"
-              />
-            </div>
-
-            {/* Water */}
-            <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
-              <label className="text-[10px] font-bold text-slate-500 block mb-1">Water Glasses</label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            {/* Water Input */}
+            <div className="p-3 bg-cyan-50/40 rounded-2xl border border-cyan-100">
+              <label className="text-[11px] font-bold text-slate-700 block mb-1">💧 Water Glasses</label>
               <div className="flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => setInputWaterGlasses(Math.max(0, inputWaterGlasses - 1))}
-                  className="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded font-bold cursor-pointer"
+                  className="w-7 h-7 bg-white rounded-lg border border-slate-200 font-bold flex items-center justify-center cursor-pointer hover:bg-slate-100"
                 >
                   -
                 </button>
-                <span className="font-mono font-bold">{inputWaterGlasses}</span>
+                <span className="text-base font-black font-mono text-cyan-900">{inputWaterGlasses}</span>
                 <button
                   type="button"
                   onClick={() => setInputWaterGlasses(inputWaterGlasses + 1)}
-                  className="px-2 py-0.5 bg-teal-100 hover:bg-teal-200 text-teal-800 rounded font-bold cursor-pointer"
+                  className="w-7 h-7 bg-cyan-600 text-white rounded-lg font-bold flex items-center justify-center cursor-pointer hover:bg-cyan-700"
                 >
                   +
                 </button>
               </div>
             </div>
 
-            {/* Sleep */}
-            <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
-              <label className="text-[10px] font-bold text-slate-500 block mb-1">Sleep (Hrs)</label>
+            {/* Sleep Input */}
+            <div className="p-3 bg-indigo-50/40 rounded-2xl border border-indigo-100">
+              <label className="text-[11px] font-bold text-slate-700 block mb-1">😴 Sleep Hours</label>
               <input
                 type="number"
                 step="0.5"
                 value={inputSleepHours}
                 onChange={(e) => setInputSleepHours(Number(e.target.value))}
-                className="w-full font-mono font-bold text-center bg-white rounded-lg border border-slate-200 py-1"
+                className="w-full text-center text-sm font-bold font-mono py-1 bg-white rounded-lg border border-slate-200"
               />
             </div>
 
-            {/* Weight */}
-            <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
-              <label className="text-[10px] font-bold text-slate-500 block mb-1">Weight (kg)</label>
+            {/* Weight Input */}
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
+              <label className="text-[11px] font-bold text-slate-700 block mb-1">⚖️ Weight (kg)</label>
               <input
                 type="number"
                 value={inputWeightKg}
                 onChange={(e) => setInputWeightKg(Number(e.target.value))}
-                className="w-full font-mono font-bold text-center bg-white rounded-lg border border-slate-200 py-1"
+                className="w-full text-center text-sm font-bold font-mono py-1 bg-white rounded-lg border border-slate-200"
               />
             </div>
 
-            {/* Save Button */}
-            <div className="flex items-end">
-              <button
-                type="submit"
-                disabled={isSavingLog}
-                className="w-full py-2.5 bg-teal-700 hover:bg-teal-800 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>{isSavingLog ? 'Updating...' : 'Log Input'}</span>
-              </button>
+            {/* Blood Pressure */}
+            <div className="p-3 bg-rose-50/40 rounded-2xl border border-rose-100">
+              <label className="text-[11px] font-bold text-slate-700 block mb-1">❤️ Blood Pressure</label>
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  value={inputSystolic}
+                  onChange={(e) => setInputSystolic(e.target.value)}
+                  className="w-full text-center text-xs font-bold font-mono py-1 bg-white rounded border border-slate-200"
+                />
+                <span>/</span>
+                <input
+                  type="number"
+                  value={inputDiastolic}
+                  onChange={(e) => setInputDiastolic(e.target.value)}
+                  className="w-full text-center text-xs font-bold font-mono py-1 bg-white rounded border border-slate-200"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Quick Symptoms Tap */}
-          <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] pt-1">
-            <span className="text-slate-400 font-medium shrink-0">Today's Feeling:</span>
-            {quickSymptoms.map((sym) => (
+          {/* Quick Feeling Selection */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+            <span className="text-slate-500 font-medium">How do you feel?</span>
+            {simpleFeelings.map((feeling) => (
               <button
-                key={sym}
+                key={feeling}
                 type="button"
-                onClick={() => setSelectedSymptom(sym)}
-                className={`px-3 py-1 rounded-full transition-all cursor-pointer shrink-0 font-medium ${
-                  selectedSymptom === sym
-                    ? 'bg-teal-700 text-white font-bold'
+                onClick={() => setSelectedFeeling(feeling)}
+                className={`px-3 py-1.5 rounded-full transition-all cursor-pointer font-medium ${
+                  selectedFeeling === feeling
+                    ? 'bg-teal-700 text-white font-bold shadow-xs'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                 }`}
               >
-                {selectedSymptom === sym ? '✓ ' : ''}{sym}
+                {selectedFeeling === feeling ? '✓ ' : ''}{feeling}
               </button>
             ))}
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={isSavingLog}
+              className="px-6 py-2.5 bg-teal-700 hover:bg-teal-800 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-sm flex items-center gap-2 cursor-pointer active:scale-95 text-xs"
+            >
+              <Save className="w-4 h-4" />
+              <span>{isSavingLog ? 'Saving...' : 'Save Today’s Vitals'}</span>
+            </button>
           </div>
         </form>
       </div>
 
-      {/* 7. PREDICTIVE MULTI-FACTOR ML RISK MATRIX */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-teal-700" />
-            <h3 className="text-sm font-bold text-slate-900">
-              Predictive Youth Disease Risk Matrix
-            </h3>
-          </div>
-          <button
-            onClick={() => onOpenDiseases()}
-            className="text-xs font-bold text-teal-700 hover:underline flex items-center gap-1 cursor-pointer"
-          >
-            <span>Disease Catalog</span>
-            <ArrowRight className="w-3 h-3" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          {/* Condition 1: Anemia */}
-          <div
-            onClick={() => onOpenDiseases('anemia-iron-deficiency')}
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-teal-400 transition-all cursor-pointer shadow-xs group"
-          >
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-xs font-bold text-slate-900 group-hover:text-teal-800">
-                Iron Anemia Risk
-              </span>
-              <span className="text-[10px] font-mono font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded">
-                68% High
-              </span>
-            </div>
-            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-2">
-              <div className="bg-rose-500 h-full rounded-full" style={{ width: '68%' }} />
-            </div>
-            <span className="text-[11px] text-slate-500 block truncate">
-              Trigger: Ferritin (18 ng/mL) &lt; 20
-            </span>
-            <span className="text-[10px] font-bold text-teal-700 mt-2 block group-hover:underline">
-              Run AI Protocol →
-            </span>
-          </div>
-
-          {/* Condition 2: Vitamin D */}
-          <div
-            onClick={() => onOpenDiseases('vitamin-d-b12-deficiency')}
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-teal-400 transition-all cursor-pointer shadow-xs group"
-          >
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-xs font-bold text-slate-900 group-hover:text-teal-800">
-                Indoor Vit D Deficit
-              </span>
-              <span className="text-[10px] font-mono font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
-                45% Mod
-              </span>
-            </div>
-            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-2">
-              <div className="bg-amber-500 h-full rounded-full" style={{ width: '45%' }} />
-            </div>
-            <span className="text-[11px] text-slate-500 block truncate">
-              Trigger: 25-OH D (24.2 ng/mL)
-            </span>
-            <span className="text-[10px] font-bold text-teal-700 mt-2 block group-hover:underline">
-              Run AI Protocol →
-            </span>
-          </div>
-
-          {/* Condition 3: Burnout */}
-          <div
-            onClick={() => onOpenDiseases('burnout-chronic-fatigue')}
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-teal-400 transition-all cursor-pointer shadow-xs group"
-          >
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-xs font-bold text-slate-900 group-hover:text-teal-800">
-                Circadian Burnout
-              </span>
-              <span className="text-[10px] font-mono font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
-                32% Low-Mod
-              </span>
-            </div>
-            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-2">
-              <div className="bg-amber-400 h-full rounded-full" style={{ width: '32%' }} />
-            </div>
-            <span className="text-[11px] text-slate-500 block truncate">
-              Trigger: 7.5h sleep + study fatigue
-            </span>
-            <span className="text-[10px] font-bold text-teal-700 mt-2 block group-hover:underline">
-              Run AI Protocol →
-            </span>
-          </div>
-
-          {/* Condition 4: Metabolic */}
-          <div
-            onClick={() => onOpenDiseases('hypertension-youth')}
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-teal-400 transition-all cursor-pointer shadow-xs group"
-          >
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-xs font-bold text-slate-900 group-hover:text-teal-800">
-                Cardio Pressure
-              </span>
-              <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                12% Optimal
-              </span>
-            </div>
-            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-2">
-              <div className="bg-emerald-500 h-full rounded-full" style={{ width: '12%' }} />
-            </div>
-            <span className="text-[11px] text-slate-500 block truncate">
-              Trigger: BP 118/76 mmHg
-            </span>
-            <span className="text-[10px] font-bold text-teal-700 mt-2 block group-hover:underline">
-              Run AI Protocol →
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 8. Quick Interactive AI Copilot Prompts */}
-      <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2 text-slate-700 font-semibold">
+      {/* 7. ASK AROGYASAATHI */}
+      <div className="bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2 text-slate-800 font-bold">
           <Bot className="w-4 h-4 text-teal-700" />
-          <span>Quick ArogyaSaathi Copilot Inferences:</span>
+          <span>Ask ArogyaSaathi</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => onOpenChat('Can you correlate my 7-day sleep duration and water intake with my energy levels?')}
-            className="px-3 py-1 bg-white hover:bg-teal-50 text-slate-700 hover:text-teal-900 rounded-xl border border-slate-200 text-xs font-medium cursor-pointer transition-colors shadow-2xs"
+            onClick={() => onOpenChat('Why do I feel sleepy around 3 PM during study classes?')}
+            className="px-3 py-1.5 bg-white hover:bg-teal-50 text-slate-700 hover:text-teal-900 rounded-xl border border-slate-200 text-xs font-medium cursor-pointer transition-colors shadow-2xs"
           >
-            📊 Correlate 7-Day Sleep & Energy
+            🥱 Why am I tired in class?
           </button>
           <button
-            onClick={() => onOpenChat('Generate 4 high-yield doctor consultation questions for my next clinic checkup.')}
-            className="px-3 py-1 bg-white hover:bg-teal-50 text-slate-700 hover:text-teal-900 rounded-xl border border-slate-200 text-xs font-medium cursor-pointer transition-colors shadow-2xs"
+            onClick={() => onOpenChat('What are simple everyday foods to increase low iron reserves fast?')}
+            className="px-3 py-1.5 bg-white hover:bg-teal-50 text-slate-700 hover:text-teal-900 rounded-xl border border-slate-200 text-xs font-medium cursor-pointer transition-colors shadow-2xs"
           >
-            🩺 Prep Doctor Questions
+            🥗 Easy foods to boost iron
+          </button>
+          <button
+            onClick={() => onOpenChat('Is my blood pressure reading 118/76 good for my age?')}
+            className="px-3 py-1.5 bg-white hover:bg-teal-50 text-slate-700 hover:text-teal-900 rounded-xl border border-slate-200 text-xs font-medium cursor-pointer transition-colors shadow-2xs"
+          >
+            ❤️ Is my blood pressure healthy?
           </button>
         </div>
       </div>

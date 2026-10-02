@@ -23,6 +23,23 @@ export interface UserProfile {
   unlockedFeatures: string[]; // List of redeemed special ArogyaSaathi features
   pinCode?: string;
   anonymousMode?: boolean;
+  healthSyncEnabled?: boolean;
+  healthSyncProvider?: 'google_fit' | 'health_connect';
+  lastSyncTimestamp?: string;
+}
+
+export interface HealthAnomalyInsight {
+  id: string;
+  type: 'sleep_drop' | 'heart_rate_spike' | 'blood_pressure_spike' | 'hydration_deficit' | 'stress_surge';
+  severity: 'urgent' | 'warning' | 'info';
+  title: string;
+  message: string;
+  metricLabel: string;
+  metricCurrent: string;
+  metricBaseline: string;
+  detectedAt: string;
+  clinicalAction: string;
+  dismissed?: boolean;
 }
 
 export interface SpecialFeature {

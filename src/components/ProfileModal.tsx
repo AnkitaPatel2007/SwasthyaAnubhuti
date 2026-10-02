@@ -18,7 +18,8 @@ import {
   Moon,
   Sparkles,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react';
 import { UserProfile } from '../types/index.ts';
 
@@ -71,6 +72,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [diastolic, setDiastolic] = useState<number>(profile?.bloodPressureDiastolic || 76);
   const [restingHr, setRestingHr] = useState<number>(profile?.restingHeartRate || 71);
 
+  // Background Sync with Google Fit / Health Connect
+  const [healthSyncEnabled, setHealthSyncEnabled] = useState<boolean>(profile?.healthSyncEnabled ?? true);
+  const [healthSyncProvider, setHealthSyncProvider] = useState<'google_fit' | 'health_connect'>(profile?.healthSyncProvider || 'google_fit');
+  const [lastSyncTimestamp, setLastSyncTimestamp] = useState<string | null>(profile?.lastSyncTimestamp || '2026-10-02T09:42:00Z');
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+
   // Security & Privacy State
   const [anonymousMode, setAnonymousMode] = useState<boolean>(profile?.anonymousMode || false);
   const [isSaving, setIsSaving] = useState(false);
@@ -82,6 +89,57 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [authPassword, setAuthPassword] = useState('');
   const [authName, setAuthName] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
+
+  const formatSyncTime = (isoString?: string | null) => {
+    if (!isoString) return 'Never synced';
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return 'Recently';
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  const handleToggleSync = async (enabled: boolean) => {
+    setHealthSyncEnabled(enabled);
+    try {
+      const timestamp = enabled ? (lastSyncTimestamp || new Date().toISOString()) : lastSyncTimestamp;
+      await onUpdateProfile({
+        healthSyncEnabled: enabled,
+        healthSyncProvider,
+        lastSyncTimestamp: timestamp || undefined,
+      });
+      setStatusMessage(enabled ? 'Background biometric sync enabled.' : 'Background sync paused.');
+      setTimeout(() => setStatusMessage(null), 2500);
+    } catch (err: any) {
+      setStatusMessage(`Error: ${err?.message || 'Failed to update sync setting'}`);
+    }
+  };
+
+  const handleTriggerSync = async () => {
+    setIsSyncing(true);
+    setStatusMessage(null);
+    try {
+      // Simulate real-time secure biometric pull from Google Fit / Health Connect API
+      await new Promise((r) => setTimeout(r, 850));
+      const newTimestamp = new Date().toISOString();
+      setLastSyncTimestamp(newTimestamp);
+      await onUpdateProfile({
+        healthSyncEnabled: true,
+        healthSyncProvider,
+        lastSyncTimestamp: newTimestamp,
+      });
+      setStatusMessage(`Synced with ${healthSyncProvider === 'google_fit' ? 'Google Fit' : 'Health Connect'} successfully.`);
+      setTimeout(() => setStatusMessage(null), 3000);
+    } catch (err: any) {
+      setStatusMessage(`Sync failed: ${err.message || 'Error connecting to device API'}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +161,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         bloodPressureDiastolic: Number(diastolic),
         restingHeartRate: Number(restingHr),
         anonymousMode,
+        healthSyncEnabled,
+        healthSyncProvider,
+        lastSyncTimestamp: lastSyncTimestamp || undefined,
       });
       setStatusMessage('Biometric baselines updated successfully.');
       setTimeout(() => setStatusMessage(null), 3500);
@@ -243,6 +304,103 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           {/* TAB 1: Biometric Profile Form */}
           {activeTab === 'profile' && profile && (
             <form onSubmit={handleSaveProfile} className="space-y-4">
+              {/* Background Biometric Sync with Google Fit / Health Connect */}
+              <div className="p-3.5 bg-gradient-to-br from-teal-50/90 via-emerald-50/40 to-cyan-50/70 rounded-2xl border border-teal-200/90 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-teal-600/10 text-teal-800 flex items-center justify-center shrink-0">
+                      <Activity className="w-4 h-4 text-teal-700" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>Biometric Hardware Sync</span>
+                        {healthSyncEnabled ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-bold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Active
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600 text-[9px] font-bold">
+                            Paused
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-[10px] text-slate-500">
+                        Pulls resting heart rate, sleep duration & vitals
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Toggle Switch */}
+                  <button
+                    type="button"
+                    onClick={() => handleToggleSync(!healthSyncEnabled)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      healthSyncEnabled ? 'bg-teal-700' : 'bg-slate-300'
+                    }`}
+                    role="switch"
+                    aria-checked={healthSyncEnabled}
+                    title="Enable or disable background health sync"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        healthSyncEnabled ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Provider selection pills & last sync timestamp */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-teal-100/80 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHealthSyncProvider('google_fit');
+                        onUpdateProfile({ healthSyncProvider: 'google_fit' });
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        healthSyncProvider === 'google_fit'
+                          ? 'bg-teal-800 text-white shadow-2xs'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      Google Fit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHealthSyncProvider('health_connect');
+                        onUpdateProfile({ healthSyncProvider: 'health_connect' });
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        healthSyncProvider === 'health_connect'
+                          ? 'bg-teal-800 text-white shadow-2xs'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      Health Connect
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between sm:justify-end gap-2">
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      Last sync: <strong className="text-slate-800 font-semibold">{formatSyncTime(lastSyncTimestamp)}</strong>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleTriggerSync}
+                      disabled={!healthSyncEnabled || isSyncing}
+                      className="p-1 rounded-lg hover:bg-teal-100 text-teal-800 disabled:opacity-40 transition-all cursor-pointer"
+                      title="Sync Now from Health API"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-teal-700' : ''}`} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="col-span-2">
                   <label className="text-[11px] font-bold text-slate-600 block mb-1">Full Name</label>

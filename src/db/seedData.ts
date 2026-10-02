@@ -26,7 +26,10 @@ export const SEED_PROFILE: UserProfile = {
   familyHistory: ['Type 2 Diabetes (Grandparent)', 'Hypertension (Father)'],
   healthPoints: 240, // Points earned from 5-day habit streaks
   unlockedFeatures: [],
-  anonymousMode: false
+  anonymousMode: false,
+  healthSyncEnabled: true,
+  healthSyncProvider: 'google_fit',
+  lastSyncTimestamp: '2026-10-02T09:42:00Z'
 };
 
 export const SEED_REPORTS: MedicalReport[] = [

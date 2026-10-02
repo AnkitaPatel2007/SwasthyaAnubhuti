@@ -10,12 +10,15 @@ import {
   FileCheck,
   Sparkles,
   ExternalLink,
-  Info
+  Info,
+  Download
 } from 'lucide-react';
-import { MedicalReport, HealthBiomarker } from '../types/index.ts';
+import { MedicalReport, HealthBiomarker, UserProfile } from '../types/index.ts';
+import { generateReportPDF } from '../utils/pdfGenerator.ts';
 
 interface ReportsVaultProps {
   reports: MedicalReport[];
+  userProfile?: UserProfile | null;
   onUploadReport: (payload: { fileName: string; fileData?: string; mimeType?: string; title?: string }) => Promise<void>;
   onDeleteReport: (id: string) => Promise<void>;
   onSelectBiomarkerForTrend: (paramName: string) => void;
@@ -23,6 +26,7 @@ interface ReportsVaultProps {
 
 export const ReportsVault: React.FC<ReportsVaultProps> = ({
   reports,
+  userProfile,
   onUploadReport,
   onDeleteReport,
   onSelectBiomarkerForTrend,
@@ -202,9 +206,22 @@ export const ReportsVault: React.FC<ReportsVaultProps> = ({
                   {r.title}
                 </h4>
 
-                <div className="flex items-center justify-between text-xs text-slate-400 mt-2">
-                  <span className="truncate max-w-[160px]">{r.fileName}</span>
-                  <span>{r.parameters.length} biomarkers</span>
+                <div className="flex items-center justify-between text-xs text-slate-400 mt-2.5 pt-2 border-t border-slate-100">
+                  <span className="truncate max-w-[140px]">{r.fileName}</span>
+                  <div className="flex items-center gap-2">
+                    <span>{r.parameters.length} biomarkers</span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        generateReportPDF(r, userProfile);
+                      }}
+                      className="p-1 text-slate-400 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors cursor-pointer"
+                      title="Download as PDF"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -233,13 +250,24 @@ export const ReportsVault: React.FC<ReportsVaultProps> = ({
                   </span>
                 </div>
 
-                <button
-                  onClick={() => onDeleteReport(activeReport.id)}
-                  className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors self-start sm:self-auto"
-                  title="Permanently delete this report and extracted parameters"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <button
+                    onClick={() => generateReportPDF(activeReport, userProfile)}
+                    className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200/90 rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer"
+                    title="Download complete clinical summary as PDF for doctor review"
+                  >
+                    <Download className="w-4 h-4 text-teal-700" />
+                    <span>Download as PDF</span>
+                  </button>
+
+                  <button
+                    onClick={() => onDeleteReport(activeReport.id)}
+                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                    title="Permanently delete this report and extracted parameters"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {/* GenAI Plain Language Summary */}

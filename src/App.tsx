@@ -352,6 +352,7 @@ export default function App() {
         {currentTab === 'reports' && (
           <ReportsVault
             reports={reports}
+            userProfile={profile}
             onUploadReport={handleUploadReport}
             onDeleteReport={handleDeleteReport}
             onSelectBiomarkerForTrend={(param) => {

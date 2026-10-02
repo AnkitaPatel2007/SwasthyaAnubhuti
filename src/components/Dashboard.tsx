@@ -43,7 +43,9 @@ import {
 } from '../types/index.ts';
 import { WeeklyStreakMilestone } from './WeeklyStreakMilestone.tsx';
 import { BiomarkerDeclineAlertBanner } from './BiomarkerDeclineAlertBanner.tsx';
+import { HealthInsightNotifier } from './HealthInsightNotifier.tsx';
 import { detectBiomarkerDeclines } from '../utils/trendAlertEngine.ts';
+import { analyzeHealthAnomalies } from '../utils/healthInsightEngine.ts';
 
 interface DashboardProps {
   profile: UserProfile | null;
@@ -98,6 +100,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const detected = detectBiomarkerDeclines(dailyUpdates || [], profile);
     return detected.filter(a => !dismissedAlertIds.includes(a.id));
   }, [dailyUpdates, profile, dismissedAlertIds]);
+
+  // Health Insight Anomaly Detection (Sleep drops, heart rate spikes, hydration deficits)
+  const healthAnomalies = useMemo(() => {
+    return analyzeHealthAnomalies(dailyUpdates || [], profile);
+  }, [dailyUpdates, profile]);
 
   // Interactive Health Insights Chart State
   const [insightMetric, setInsightMetric] = useState<'combined' | 'sleep' | 'energy' | 'water'>('combined');
@@ -296,6 +303,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
         onOpenRewards={onOpenRewards}
         onClaimRewardPoints={onClaimMilestonePoints}
       />
+
+      {/* HEALTH INSIGHT ANOMALY NOTIFICATION SYSTEM */}
+      {healthAnomalies.length > 0 && (
+        <HealthInsightNotifier
+          insights={healthAnomalies}
+          onQuickAction={async (insight) => {
+            if (insight.type === 'hydration_deficit') {
+              await onQuickAddWater();
+            }
+          }}
+          onAskAI={onOpenChat}
+        />
+      )}
 
       {/* 7-DAY BIOMARKER TREND DECLINE ALERTS & ACTIONABLE RECOVERY DIRECTIVES */}
       {trendAlerts.length > 0 && (

@@ -1,71 +1,76 @@
 import { DiseaseCondition } from '../types/index.ts';
+import { APP_IMAGES } from '../assets/images.ts';
 
 export const DISEASES_CATALOG: DiseaseCondition[] = [
   {
     id: 'anemia-iron-deficiency',
     name: 'Iron Deficiency & Anemia',
     category: 'Nutritional & Blood',
-    prevalenceInYouth: 'Affects over 30% of young women and 10% of young men (common in college students and plant-based diets).',
-    description: 'A condition where blood lacks adequate healthy red blood cells or iron stores, significantly reducing oxygen delivery to the brain and working muscles.',
+    prevalenceInYouth: 'Affects over 30% of young women and 10% of young men (frequent in university students and plant-based diets).',
+    description: 'A condition where blood lacks adequate healthy red blood cells or iron stores, significantly reducing tissue oxygenation to the brain and working skeletal muscles.',
+    imageUrl: APP_IMAGES.clinicalLabAnalysis,
+    clinicalSource: 'Mayo Clinic Hematology & WHO 2025/2026 Guidelines',
     commonSymptoms: [
-      'Persistent fatigue and midday exhaustion',
-      'Brain fog and difficulty concentrating during lectures/work',
-      'Dizziness or lightheadedness when standing up quickly',
-      'Pale skin, brittle spoon-shaped nails, cold hands/feet',
-      'Shortness of breath during moderate stairs or exercise'
+      'Persistent daytime fatigue and afternoon exhaustion',
+      'Cognitive fog and difficulty concentrating during study or work',
+      'Lightheadedness or postural dizziness when standing up quickly',
+      'Pale conjunctiva/skin, brittle nails, cold extremities',
+      'Shortness of breath during moderate stair climbing or walking'
     ],
     keyLabTests: [
       { testName: 'Complete Blood Count (CBC)', keyParameter: 'Hemoglobin (Hb)', typicalAbnormality: '< 12.0 g/dL (Females), < 13.5 g/dL (Males)' },
-      { testName: 'Iron Profile', keyParameter: 'Serum Ferritin', typicalAbnormality: '< 20 - 30 ng/mL (depleted iron reserves)' },
-      { testName: 'RBC Indices', keyParameter: 'MCV (Mean Corpuscular Volume)', typicalAbnormality: '< 80 fL (microcytic cells)' }
+      { testName: 'Iron Storage Panel', keyParameter: 'Serum Ferritin', typicalAbnormality: '<= 30 ng/mL (Mayo Clinic diagnostic threshold; <= 50 ng/mL with symptoms)' },
+      { testName: 'RBC Morphology Indices', keyParameter: 'MCV (Mean Corpuscular Volume)', typicalAbnormality: '< 80 fL (microcytic hypochromic cells)' }
     ],
     riskFactors: [
-      'Low dietary intake of bioavailable heme iron (strict vegan/vegetarian diets without fortification)',
-      'Heavy menstrual cycles',
-      'Intense endurance running or athletic training',
-      'Drinking tea or coffee immediately with meals (tannins block iron absorption)'
+      'Low dietary intake of bioavailable heme iron without fortified alternatives',
+      'Heavy menstrual blood loss',
+      'Intense endurance running or athletic training (foot-strike hemolysis)',
+      'Drinking black tea or coffee immediately with meals (tannins/polyphenols block up to 60-70% iron absorption)'
     ],
     preventionLifestyle: [
-      'Combine iron-rich legumes, spinach, and tofu with Vitamin C (lemon, citrus, bell peppers) to boost absorption by up to 300%.',
-      'Avoid drinking tea, coffee, or calcium supplements within 1 hour of iron-rich meals.',
-      'Take doctor-recommended gentle iron supplements with food to prevent GI upset.'
+      'Combine iron-rich legumes, spinach, and oats with Vitamin C (citrus, bell peppers) to boost absorption up to 300%.',
+      'Separate tea, coffee, and calcium supplements by at least 60 minutes from iron-containing meals.',
+      'Take physician-directed gentle iron (e.g., iron bisglycinate) with food to prevent gastric discomfort.'
     ],
     warningSignsWhenToSeeDoctor: [
-      'Chest pain or rapid pounding heart rate (palpitations) at rest',
-      'Unexplained fainting (syncope) or severe dizziness',
-      'Extreme shortness of breath during routine walking'
+      'Chest tightness or rapid pounding palpitations at rest',
+      'Unexplained syncope (fainting) or severe dizziness',
+      'Extreme shortness of breath during routine flat walking'
     ]
   },
   {
     id: 'vitamin-d-b12-deficiency',
     name: 'Vitamin D & B12 Deficiencies',
     category: 'Nutritional & Blood',
-    prevalenceInYouth: 'Over 65% of students and indoor desk workers have insufficient Vitamin D (< 30 ng/mL). B12 is prevalent in vegetarian diets.',
-    description: 'Essential micronutrient deficits caused by excessive indoor screen time, lack of direct sunlight, and restrictive student diets.',
+    prevalenceInYouth: 'Over 65% of students and indoor desk workers have insufficient 25-OH Vitamin D (< 30 ng/mL). B12 deficits are prevalent in vegetarian diets.',
+    description: 'Essential micronutrient deficits caused by excessive indoor screen time, lack of direct sunlight, and unfortified diets.',
+    imageUrl: APP_IMAGES.nutritionBiomarkerDiet,
+    clinicalSource: 'National Institutes of Health (NIH) Office of Dietary Supplements & Endocrine Society',
     commonSymptoms: [
-      'Low morning energy and seasonal mood dips',
-      'Diffuse muscle aches, bone tenderness, and frequent colds',
-      'Numbness or "pins and needles" tingling in fingers and toes (B12)',
+      'Sluggish morning wakefulness and seasonal mood dips',
+      'Diffuse skeletal soreness, muscle twitches, and frequent respiratory infections',
+      'Numbness or "pins and needles" paresthesias in fingers and toes (B12)',
       'Impaired memory recall, forgetfulness, and sluggish mental processing'
     ],
     keyLabTests: [
-      { testName: 'Vitamin D 25-Hydroxy', keyParameter: '25-OH Vitamin D', typicalAbnormality: '< 30.0 ng/mL (Deficient if < 20 ng/mL)' },
-      { testName: 'Serum Cobalamin', keyParameter: 'Vitamin B12', typicalAbnormality: '< 200 - 300 pg/mL' }
+      { testName: 'Vitamin D 25-Hydroxy', keyParameter: '25-OH Vitamin D', typicalAbnormality: '< 30.0 ng/mL (Deficient if < 20 ng/mL; Optimal is 30-50 ng/mL)' },
+      { testName: 'Serum Cobalamin', keyParameter: 'Vitamin B12', typicalAbnormality: '< 200 - 300 pg/mL (Borderline: 200-400 pg/mL)' }
     ],
     riskFactors: [
-      'Working or studying indoors 8+ hours a day with minimal sun exposure',
-      'Regular sunscreen use preventing cutaneous UV synthesis',
+      'Working or studying indoors 8+ hours a day with minimal midday sun exposure',
+      'Regular broad-spectrum sunscreen use preventing cutaneous UV-B cholecalciferol synthesis',
       'Strict plant-based diets without active B12 cyanocobalamin supplementation',
-      'Frequent usage of antacids or PPIs that reduce stomach acid needed to absorb B12'
+      'Frequent usage of antacids or PPIs that reduce stomach acid required for B12 cleavage'
     ],
     preventionLifestyle: [
-      'Get 15–20 minutes of midday sunlight on arms and face when the UV index is > 3.',
-      'Incorporate fortified milks, eggs, wild salmon, or daily 1,000–2,000 IU Vitamin D3 supplements.',
+      'Receive 15–20 minutes of midday sunlight on arms and face when the UV index is >= 3.',
+      'Incorporate fortified plant milks, eggs, salmon, or daily 1,000–2,000 IU Vitamin D3 supplements.',
       'Take a weekly sublingual methylcobalamin or daily multivitamin if following a vegetarian diet.'
     ],
     warningSignsWhenToSeeDoctor: [
       'Persistent numbness, unsteadiness while walking, or tingling in extremities',
-      'Severe depressive mood or cognitive decline that interferes with academics/work'
+      'Severe depressive mood or cognitive decline that interferes with academics or work'
     ]
   },
   {
@@ -74,6 +79,8 @@ export const DISEASES_CATALOG: DiseaseCondition[] = [
     category: 'Metabolic & Cardiovascular',
     prevalenceInYouth: 'Rising rapidly among young adults ages 18–35 due to sedentary lifestyles, energy drinks, and ultra-processed food.',
     description: 'A metabolic state where cells become resistant to insulin, forcing the pancreas to produce excess insulin to keep blood sugar normal, eventually leading to Type 2 Diabetes.',
+    imageUrl: APP_IMAGES.heroPreventiveCare,
+    clinicalSource: 'American Diabetes Association (ADA) Clinical Guidelines 2025',
     commonSymptoms: [
       'Post-meal energy crashes ("food coma") especially after carb-heavy lunches',
       'Intense cravings for sugar or caffeine 1–2 hours after eating',
@@ -108,6 +115,8 @@ export const DISEASES_CATALOG: DiseaseCondition[] = [
     category: 'Metabolic & Cardiovascular',
     prevalenceInYouth: '1 in 5 young adults (ages 20–39) has elevated total cholesterol or high triglycerides.',
     description: 'An imbalance of blood lipids (elevated LDL cholesterol, high triglycerides, or low protective HDL) that initiates early arterial plaque accumulation.',
+    imageUrl: APP_IMAGES.clinicalLabAnalysis,
+    clinicalSource: 'American Heart Association (AHA) Prevention Council',
     commonSymptoms: [
       'Often "silent" with zero early symptoms until blood tests are performed',
       'Occasionally sluggish circulation or fatigue when paired with metabolic syndrome',
@@ -140,6 +149,8 @@ export const DISEASES_CATALOG: DiseaseCondition[] = [
     category: 'Metabolic & Cardiovascular',
     prevalenceInYouth: 'Affects roughly 12–15% of college students and young professionals, often undetected.',
     description: 'Chronic elevated pressure of circulating blood against arterial walls, frequently exacerbated in youth by exam/work stress, caffeine overconsumption, and high-sodium packaged snacks.',
+    imageUrl: APP_IMAGES.heroPreventiveCare,
+    clinicalSource: 'CDC Division for Heart Disease & American Heart Association (AHA)',
     commonSymptoms: [
       'Usually silent; known as the "silent condition"',
       'Occipital morning headaches at the back of the skull',
@@ -168,10 +179,12 @@ export const DISEASES_CATALOG: DiseaseCondition[] = [
   },
   {
     id: 'thyroid-disorders-hypo-hyper',
-    name: 'Thyroid Disorders (Hypothyroidism & Hyperthyroidism)',
+    name: 'Thyroid Disorders (Hypo & Hyperthyroidism)',
     category: 'Endocrine & Hormones',
     prevalenceInYouth: 'Subclinical hypothyroidism is present in ~5–8% of young adults, disproportionately affecting young women.',
     description: 'Dysfunction of the butterfly-shaped thyroid gland that regulates the body’s metabolic rate, temperature control, and protein synthesis.',
+    imageUrl: APP_IMAGES.clinicalLabAnalysis,
+    clinicalSource: 'American Thyroid Association (ATA) Clinical Guidelines',
     commonSymptoms: [
       'Hypothyroid: Unexplained weight gain despite diet, intolerance to cold weather, chronic sluggishness, dry skin, constipation',
       'Hyperthyroid: Unintentional rapid weight loss, heat intolerance, racing heart rate, hand tremors, jittery anxiety',
@@ -204,6 +217,8 @@ export const DISEASES_CATALOG: DiseaseCondition[] = [
     category: 'Digestive & Gut',
     prevalenceInYouth: 'Surging in young adults (estimated 20% in young urban populations) linked to sugary drinks and sedentary screen time.',
     description: 'Accumulation of excessive triglycerides inside liver hepatocytes in individuals who drink little to no alcohol, leading to cellular inflammation.',
+    imageUrl: APP_IMAGES.nutritionBiomarkerDiet,
+    clinicalSource: 'American Association for the Study of Liver Diseases (AASLD)',
     commonSymptoms: [
       'Often completely asymptomatic in early stages',
       'Dull ache or fullness in the upper right side of the abdomen below ribs',
@@ -231,10 +246,12 @@ export const DISEASES_CATALOG: DiseaseCondition[] = [
   },
   {
     id: 'gerd-acid-reflux-ibs',
-    name: 'GERD (Acid Reflux) & Irritable Bowel Syndrome',
+    name: 'GERD & Irritable Bowel Syndrome',
     category: 'Digestive & Gut',
     prevalenceInYouth: 'Very common in college students (up to 25%) driven by late-night studying, coffee on an empty stomach, and exam anxiety.',
     description: 'Upper digestive tract acid reflux and gut-brain axis motility disturbances leading to chronic abdominal discomfort, bloating, and heartburn.',
+    imageUrl: APP_IMAGES.lifestyleHydration,
+    clinicalSource: 'American College of Gastroenterology (ACG) Guidelines',
     commonSymptoms: [
       'Burning sensation in chest or throat (heartburn) after spicy, fatty, or late meals',
       'Sour liquid regurgitation and chronic dry morning throat clearing',
@@ -268,6 +285,8 @@ export const DISEASES_CATALOG: DiseaseCondition[] = [
     category: 'Mental & Neurological',
     prevalenceInYouth: 'Primary cause of missed college classes and workplace absenteeism in young adults ages 18–35.',
     description: 'Neurological headache disorders characterized by throbbing pain, sensory hypersensitivity, and pericranial muscle contractions from posture and stress.',
+    imageUrl: APP_IMAGES.lifestyleHydration,
+    clinicalSource: 'Mayo Clinic Neurology & International Headache Society',
     commonSymptoms: [
       'Intense pulsating or throbbing pain, often on one side of the head',
       'Sensitivity to bright light (photophobia), loud sounds, or screen glare',
@@ -288,7 +307,7 @@ export const DISEASES_CATALOG: DiseaseCondition[] = [
     preventionLifestyle: [
       'Adhere strictly to the 20-20-20 rule: every 20 minutes look 20 feet away for 20 seconds.',
       'Keep a consistent daily sleep schedule—avoiding both sleep deprivation and massive weekend oversleeping.',
-      'Ensure 2.5 liters of daily hydration and supplement with 200–400 mg Magnesium glycinate if approved by doctor.'
+      'Ensure 2.5 to 3.0 liters of daily hydration (Mayo Clinic fluid benchmark).'
     ],
     warningSignsWhenToSeeDoctor: [
       '"Thunderclap" sudden onset severe headache that peaks within 60 seconds (requires ER emergency evaluation)',
@@ -301,6 +320,8 @@ export const DISEASES_CATALOG: DiseaseCondition[] = [
     category: 'Mental & Neurological',
     prevalenceInYouth: 'Over 44% of college students report chronic overwhelming stress and symptoms of clinical anxiety.',
     description: 'A state of emotional, physical, and mental exhaustion caused by prolonged and chronic academic, career, and social media pressures, driving autonomic nervous system imbalance.',
+    imageUrl: APP_IMAGES.heroPreventiveCare,
+    clinicalSource: 'World Health Organization (WHO) & American Psychological Association (APA)',
     commonSymptoms: [
       'Constant dread, racing thoughts, and inability to unwind or quiet the mind',
       'Feeling physically drained despite spending 8 hours in bed',
@@ -309,7 +330,7 @@ export const DISEASES_CATALOG: DiseaseCondition[] = [
       'Unpredictable irritability and emotional sensitivity'
     ],
     keyLabTests: [
-      { testName: 'Endocrine & Metabolic Screen', keyParameter: 'TSH, Vitamin D, Ferritin, Cortisol', typicalAbnormality: 'Monitored to ensure biological deficiencies are not mimicking depression/burnout' }
+      { testName: 'Endocrine & Metabolic Screen', keyParameter: 'TSH, Vitamin D, Ferritin, Cortisol', typicalAbnormality: 'Monitored to ensure biological deficiencies are not mimicking depression or burnout' }
     ],
     riskFactors: [
       'Perfectionism and lack of clear boundaries between work/study and personal rest',

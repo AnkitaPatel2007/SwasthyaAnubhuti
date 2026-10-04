@@ -53,10 +53,10 @@ export const ArogyaSaathiPopup: React.FC<ArogyaSaathiPopupProps> = ({
   if (!isOpen) return null;
 
   const quickPrompts = [
-    { label: '🩸 Explain My Iron & Ferritin', prompt: 'Can you analyze my serum ferritin and iron markers from my uploaded report and explain what they mean for my daily energy?' },
-    { label: '🩺 Doctor Visit Checklist', prompt: 'Generate 4 high-yield questions I should ask my doctor based on my real logged vitals and lab results.' },
-    { label: '🥗 Food Pairings for Absorption', prompt: 'What foods enhance micronutrient absorption, and what common morning beverages block it?' },
-    { label: '💤 Sleep & Recovery Audit', prompt: 'Analyze my logged sleep duration and daily fatigue symptoms and advise on optimizing recovery.' },
+    { label: 'Explain Iron & Ferritin', prompt: 'Can you analyze my serum ferritin and iron markers from my uploaded report and explain what they mean for my daily energy?' },
+    { label: 'Doctor Visit Checklist', prompt: 'Generate 4 high-yield questions I should ask my doctor based on my real logged vitals and lab results.' },
+    { label: 'Nutrient Food Pairings', prompt: 'What foods enhance micronutrient absorption, and what common morning beverages block it?' },
+    { label: 'Sleep & Recovery Audit', prompt: 'Analyze my logged sleep duration and daily fatigue symptoms and advise on optimizing recovery.' },
   ];
 
   const handleSend = async (textToSend?: string) => {

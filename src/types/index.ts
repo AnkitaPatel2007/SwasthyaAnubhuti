@@ -92,6 +92,8 @@ export interface DiseaseCondition {
   category: 'Nutritional & Blood' | 'Metabolic & Cardiovascular' | 'Endocrine & Hormones' | 'Mental & Neurological' | 'Digestive & Gut' | 'Respiratory & Immunity';
   prevalenceInYouth: string;
   description: string;
+  imageUrl?: string;
+  clinicalSource?: string;
   commonSymptoms: string[];
   keyLabTests: { testName: string; keyParameter: string; typicalAbnormality: string }[];
   riskFactors: string[];

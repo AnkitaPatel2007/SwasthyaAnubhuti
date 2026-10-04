@@ -223,5 +223,17 @@ export const apiClient = {
     return this.request<{ success: boolean; message: string }>('/api/privacy/account', {
       method: 'DELETE',
     });
+  },
+
+  // 1 Million User Scale & Concurrency Telemetry
+  async getScaleMetrics(): Promise<any> {
+    return this.request<any>('/api/scale/metrics');
+  },
+
+  async runScaleBenchmark(count: number = 10000): Promise<any> {
+    return this.request<any>('/api/scale/benchmark', {
+      method: 'POST',
+      body: JSON.stringify({ count }),
+    });
   }
 };

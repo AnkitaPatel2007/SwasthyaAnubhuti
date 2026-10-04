@@ -12,7 +12,8 @@ import {
   User,
   Eye,
   EyeOff,
-  Smartphone
+  Smartphone,
+  Server
 } from 'lucide-react';
 import { UserProfile } from '../types/index.ts';
 
@@ -28,6 +29,7 @@ interface NavbarProps {
   isArogyaPopupOpen: boolean;
   onOpenCallModal: () => void;
   onOpenAndroidModal?: () => void;
+  onOpenScaleModal?: () => void;
   activeAlertsCount?: number;
 }
 
@@ -43,6 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   isArogyaPopupOpen,
   onOpenCallModal,
   onOpenAndroidModal,
+  onOpenScaleModal,
   activeAlertsCount = 2,
 }) => {
   const navItems = [
@@ -82,6 +85,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>⚠️ {activeAlertsCount} Alert{activeAlertsCount > 1 ? 's' : ''}</span>
             </button>
           )}
+
+          <button
+            onClick={onOpenScaleModal}
+            className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 hover:text-white border border-indigo-500/40 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer active:scale-95 shadow-2xs"
+            title="1 Million User Scale Architecture & Live Stress Benchmark"
+          >
+            <Server className="w-3 h-3 text-indigo-300" />
+            <span>1M Scale</span>
+          </button>
 
           <button
             onClick={onOpenAndroidModal}

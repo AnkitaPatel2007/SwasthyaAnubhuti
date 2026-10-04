@@ -12,6 +12,7 @@ import { DailyCheckinModal } from './components/DailyCheckinModal.tsx';
 import { ProfileModal } from './components/ProfileModal.tsx';
 import { EmergencyCallModal } from './components/EmergencyCallModal.tsx';
 import { AndroidAppModal } from './components/AndroidAppModal.tsx';
+import { ScaleArchitectureModal } from './components/ScaleArchitectureModal.tsx';
 import { apiClient } from './services/api.ts';
 import {
   UserProfile,
@@ -56,6 +57,7 @@ export default function App() {
   const [isArogyaPopupOpen, setIsArogyaPopupOpen] = useState<boolean>(false);
   const [isCallModalOpen, setIsCallModalOpen] = useState<boolean>(false);
   const [isAndroidModalOpen, setIsAndroidModalOpen] = useState<boolean>(false);
+  const [isScaleModalOpen, setIsScaleModalOpen] = useState<boolean>(false);
 
   // Fetch data on mount
   useEffect(() => {
@@ -305,6 +307,7 @@ export default function App() {
         isArogyaPopupOpen={isArogyaPopupOpen}
         onOpenCallModal={() => setIsCallModalOpen(true)}
         onOpenAndroidModal={() => setIsAndroidModalOpen(true)}
+        onOpenScaleModal={() => setIsScaleModalOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -497,6 +500,12 @@ export default function App() {
       <AndroidAppModal
         isOpen={isAndroidModalOpen}
         onClose={() => setIsAndroidModalOpen(false)}
+      />
+
+      {/* 1 Million User Scale Architecture & Live Stress Benchmark Modal */}
+      <ScaleArchitectureModal
+        isOpen={isScaleModalOpen}
+        onClose={() => setIsScaleModalOpen(false)}
       />
     </div>
   );

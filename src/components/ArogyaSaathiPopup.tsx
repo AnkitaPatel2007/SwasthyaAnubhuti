@@ -87,7 +87,7 @@ export const ArogyaSaathiPopup: React.FC<ArogyaSaathiPopupProps> = ({
   const userPoints = profile?.healthPoints || 0;
 
   return (
-    <div className="fixed top-16 sm:top-20 right-2 sm:right-6 z-50 w-[96vw] sm:w-[420px] max-h-[85vh] h-[580px] bg-white rounded-3xl shadow-2xl border border-teal-200/90 flex flex-col overflow-hidden animate-fade-in medical-card-glow">
+    <div className="fixed inset-x-2 bottom-2 top-16 sm:inset-auto sm:top-20 sm:right-6 sm:w-[440px] sm:h-[620px] max-h-[88vh] z-50 bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-teal-200 flex flex-col overflow-hidden animate-fade-in">
       {/* Top Clinical Header */}
       <div className="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white px-5 py-3.5 flex items-center justify-between border-b border-teal-800/60 shrink-0">
         <div className="flex items-center gap-2.5">
